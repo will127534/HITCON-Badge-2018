@@ -50,7 +50,7 @@ print("To:",addr)
 ToAddress.write( bytearray.fromhex(addr))
 
 Value_eth = float(sys.argv[2])
-Value_int = int(0.1*1000000000*1000000000)
+Value_int = int(Value_eth*1000000000*1000000000)
 print(Value_int/1000000000000000000," Eth")
 Value_byte = Value_int.to_bytes((Value_int.bit_length() + 7) // 8, byteorder='big')
 #print(Value_byte)
