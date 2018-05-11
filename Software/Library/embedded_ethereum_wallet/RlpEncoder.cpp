@@ -134,7 +134,7 @@ vector<uint8_t> RlpEncoder::encodeItemWithVector(const vector<uint8_t> input) {
             tmp = (uint32_t)(tmp / 256);
         }
         tmp_header.push_back((uint8_t)(tmp));
-        uint8_t len = tmp_header.size() + 1;
+        uint8_t len = tmp_header.size() ;
         tmp_header.insert(tmp_header.begin(), 0xb7 + len);
 
         // fix direction for header

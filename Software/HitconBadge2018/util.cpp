@@ -2,6 +2,23 @@
 #include "Arduino.h"
 #include "hal_trng.h"
 
+String ArraytoString(uint8_t* buffer,uint32_t len,uint32_t String_len){
+  if (String_len<len)
+  {
+    Serial.println("Error String_len< buffer len");
+    return "";
+  }
+  String data;
+  uint32_t append_0 = String_len - len;
+  for (int i = 0; i < append_0; ++i)
+  {
+    data+= "00";
+  }
+  data +=ArraytoString(buffer,len);
+  return data;
+}
+
+
 String ArraytoString(uint8_t* buffer,uint32_t len){
   String data;
   for (int i = 0; i < len; ++i)

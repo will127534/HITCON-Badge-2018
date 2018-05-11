@@ -9,9 +9,16 @@ LBLECharacteristicBuffer To_Address_Gatt("48495443-4f4e-4241-4447-453230313811",
 LBLECharacteristicBuffer Value_Gatt("48495443-4f4e-4241-4447-453230313813", LBLE_WRITE );    //1Wei
 LBLECharacteristicInt GasPrice_Gatt("48495443-4f4e-4241-4447-453230313814", LBLE_WRITE );    //1Wei
 LBLECharacteristicInt GasLimit_Gatt("48495443-4f4e-4241-4447-453230313815", LBLE_WRITE );    
-LBLECharacteristicString ETHData_Gatt("48495443-4f4e-4241-4447-453230313816", LBLE_WRITE );
 LBLECharacteristicInt Noice_Gatt("48495443-4f4e-4241-4447-453230313817", LBLE_WRITE );
 LBLECharacteristicString Txn_out_Gatt("48495443-4f4e-4241-4447-453230313818", LBLE_READ );
+
+
+LBLEService TokenService("48495443-4f4e-4241-4447-453230313840");
+//Token related
+LBLECharacteristicBuffer Token_to_address_Gatt("48495443-4f4e-4241-4447-453230313841", LBLE_WRITE );
+LBLECharacteristicBuffer Token_method_Gatt("48495443-4f4e-4241-4447-453230313842", LBLE_WRITE );
+LBLECharacteristicBuffer Token_Value_Gatt("48495443-4f4e-4241-4447-453230313843", LBLE_WRITE );
+
 //48495443-4f4e-4241-4447-45323031382x
 LBLEService RequestService("48495443-4f4e-4241-4447-453230313820");
 LBLECharacteristicBuffer WalletAddress_Gatt("48495443-4f4e-4241-4447-453230313821", LBLE_READ);
@@ -47,16 +54,24 @@ void init_BLE(){
 
   uint8_t buffer[20] = {0};
   To_Address_Gatt.setValueBuffer(buffer,20);
-  uint8_t buffer2[64] = {0};
-  Value_Gatt.setValueBuffer(buffer2,64);
+  Token_to_address_Gatt.setValueBuffer(buffer,20);
+
+  uint8_t buffer2[32] = {0};
+  Value_Gatt.setValueBuffer(buffer2,32);
+  Token_method_Gatt.setValueBuffer(buffer2,32);
+  Token_Value_Gatt.setValueBuffer(buffer2,32);
+
   // Add characteristics into ledService
   ExchangeService.addAttribute(To_Address_Gatt);
   ExchangeService.addAttribute(Value_Gatt);
   ExchangeService.addAttribute(GasPrice_Gatt);
   ExchangeService.addAttribute(GasLimit_Gatt);
-  ExchangeService.addAttribute(ETHData_Gatt);
   ExchangeService.addAttribute(Txn_out_Gatt);
   ExchangeService.addAttribute(Noice_Gatt);
+
+  TokenService.addAttribute(Token_to_address_Gatt);
+  TokenService.addAttribute(Token_method_Gatt);
+  TokenService.addAttribute(Token_Value_Gatt);
 
   SettingService.addAttribute(PinCode_Gatt);
   SettingService.addAttribute(WiFiSSID_Gatt);
@@ -68,6 +83,7 @@ void init_BLE(){
 
   // Add service to GATT server (peripheral)
   LBLEPeripheral.addService(ExchangeService);
+  LBLEPeripheral.addService(TokenService);
   LBLEPeripheral.addService(SettingService);
   LBLEPeripheral.addService(RequestService);
   // start the GATT server - it is now 
@@ -101,7 +117,7 @@ void Process_BLE(){
     uint32_t Noice_int = Noice_Gatt.getValue();
     uint64_t GasPrice_int = (uint64_t)GAS_PRICE;
     uint32_t GasLimit_int = GAS_LIMIT;
-    String ETHData_str = "";
+    String Data = "";
  
     Serial.print("TO:");Serial.println(To);
     Serial.print("Value:");Serial.println(Value_str);
@@ -115,12 +131,31 @@ void Process_BLE(){
       GasLimit_int = GasLimit_Gatt.getValue();
       Serial.print("GasLimit:");Serial.println(GasLimit_int);      
     }
-    if(ETHData_Gatt.isWritten()){
-      ETHData_str = ETHData_Gatt.getValue();
-      Serial.print("ETHData:");Serial.println(ETHData_str);
+    if(Token_method_Gatt.isWritten() && Token_to_address_Gatt.isWritten() && Token_Value_Gatt.isWritten()){
+      Serial.println("Token Transfer Get!");
+      uint8_t Token_To_Address_Buffer[20] = {0};
+      Token_to_address_Gatt.getValue(Token_To_Address_Buffer,20,0);
+
+      uint8_t * Token_Value_Buffer;
+      uint8_t size_Token_Value_Buffer = Token_Value_Gatt.getLastWrittenInfo().size;
+      Token_Value_Buffer = (uint8_t*)malloc(size_Token_Value_Buffer);
+      Token_Value_Gatt.getValue(Token_Value_Buffer,size_Token_Value_Buffer,0);
+
+      uint8_t * Token_method_Buffer;
+      uint8_t size_Token_method_Buffer = Token_method_Gatt.getLastWrittenInfo().size;
+      Token_method_Buffer = (uint8_t*)malloc(size_Token_method_Buffer);
+      Token_method_Gatt.getValue(Token_method_Buffer,size_Token_method_Buffer,0);
+
+      Serial.print("Token TO:");Serial.println(ArraytoString(Token_To_Address_Buffer,20));
+      Serial.print("Token Method:");Serial.println(ArraytoString(Token_method_Buffer,size_Token_method_Buffer,4));
+      Serial.print("Token Value:");Serial.println(ArraytoString(Token_Value_Buffer,size_Token_Value_Buffer));
+
+      Data = ArraytoString(Token_method_Buffer,size_Token_method_Buffer,4)+ArraytoString(Token_To_Address_Buffer,20,32)+ArraytoString(Token_Value_Buffer,size_Token_Value_Buffer,32);
+
+      Serial.print("Data:");Serial.println(Data);
     }
 
-    String Txn = start_transaction(publicAddress_string,To,Value_str,ETHData_str,GasPrice_int,GasLimit_int,Noice_int);
+    String Txn = start_transaction(publicAddress_string,To,Value_str,Data,GasPrice_int,GasLimit_int,Noice_int);
     Serial.print("Txn_out:");Serial.println(Txn);
     Txn_out_Gatt.setValue(Txn);
     LBLEPeripheral.notifyAll(Txn_out_Gatt);

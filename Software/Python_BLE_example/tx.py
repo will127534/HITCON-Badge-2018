@@ -44,25 +44,51 @@ Noice = p.getCharacteristics(uuid='484954434f4e42414447453230313817')[0]
 GasPrice = p.getCharacteristics(uuid='484954434f4e42414447453230313814')[0]
 GasLimit = p.getCharacteristics(uuid='484954434f4e42414447453230313815')[0]
 
+Token_to_address = p.getCharacteristics(uuid='484954434f4e42414447453230313841')[0]
+Token_method = p.getCharacteristics(uuid='484954434f4e42414447453230313842')[0]
+Token_Value = p.getCharacteristics(uuid='484954434f4e42414447453230313843')[0]
+
+
+
 print("Writing Tx msg...")
 addr = sys.argv[1]
+GasPrice_int = int(sys.argv[3])
+GasLimit_int = int(sys.argv[4])
+
+
+try:
+  Token_to_address.write(sys.argv[6])
+  Token_method.write( bytearray.fromhex("a9059cbb") )
+  Value_int = int(sys.argv[7])
+  Token_Value.write( Value_int.to_bytes((Value_int.bit_length() + 7) // 8, byteorder='big')  )
+  print("Token Address:", bytearray.fromhex(sys.argv[6]))
+  print("Token Value:", int(sys.argv[7]))
+except:
+  pass
+
+
+
 print("To:",addr)
 ToAddress.write( bytearray.fromhex(addr))
 
 Value_eth = float(sys.argv[2])
-Value_int = int(0.1*1000000000*1000000000)
+Value_int = int(Value_eth*1000000000*1000000000)
 print(Value_int/1000000000000000000," Eth")
 Value_byte = Value_int.to_bytes((Value_int.bit_length() + 7) // 8, byteorder='big')
 #print(Value_byte)
+
+if(Value_int == 0):
+  Value_byte = bytes(0x01)
+
 #print(len(Value_byte))
-Value.write(Value_int.to_bytes((Value_int.bit_length() + 7) // 8, byteorder='big'))
+
+Value.write(Value_byte)
 
 
-GasPrice_int = int(sys.argv[3])
+
 print("Writing GasPrice",GasPrice_int,"gwei")
 GasPrice.write(bytes([GasPrice_int]))
 
-GasLimit_int = int(sys.argv[4])
 print("Writing GasLimit",GasLimit_int)
 #print(GasLimit_int.to_bytes((GasLimit_int.bit_length() + 7) // 8, byteorder='little'))
 GasLimit.write(GasLimit_int.to_bytes((GasLimit_int.bit_length() + 7) // 8, byteorder='little'))
@@ -70,6 +96,7 @@ GasLimit.write(GasLimit_int.to_bytes((GasLimit_int.bit_length() + 7) // 8, byteo
 Noice_int = int(sys.argv[5])
 print("Writing Noice",Noice_int)
 Noice.write(bytes([Noice_int]))
+
 
 
 time.sleep(0.2)
