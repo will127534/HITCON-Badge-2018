@@ -11,7 +11,7 @@ extern String publicAddress_string;
 
 void init_se();
 
-String start_transaction(String from,String to, String value, String data, uint64_t gasPrice, uint32_t gasLimit, uint32_t nonce);
+uint8_t start_transaction(uint8_t* outputdata, String from,String to, String value, String data, String gasPrice, String gasLimit, String nonce);
 
 uint64_t read_balance();
 

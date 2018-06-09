@@ -23,9 +23,9 @@ public:
 
     void setPrivateKey(const uint8_t *key);
 
-    vector<uint8_t> getRaw(uint32_t nonceVal,
-                  uint64_t gasPriceVal,
-                  uint32_t  gasLimitVal,
+    vector<uint8_t> getRaw(uint8_t* nonceVal,
+                  uint8_t* gasPriceVal,
+                  uint8_t*  gasLimitVal,
                   uint8_t *toStr,
                   uint8_t *valueStr,
                   uint8_t *dataStr,
@@ -46,25 +46,25 @@ private:
 
     void GenerateSignature(uint8_t* signature,
                            int* recoveryId,
-                           uint32_t nonceVal,
-                           uint64_t gasPriceVal,
-                           uint32_t  gasLimitVal,
+                           uint8_t* nonceVal,
+                           uint8_t* gasPriceVal,
+                           uint8_t*  gasLimitVal,
                            uint8_t* toStr,
                            uint8_t* valueStr,
                            uint8_t* dataStr,
                            uint32_t chainId);
 
-    vector<uint8_t> RlpEncode(uint32_t nonceVal,
-                              uint64_t gasPriceVal,
-                              uint32_t  gasLimitVal,
+    vector<uint8_t> RlpEncode(uint8_t* nonceVal,
+                              uint8_t* gasPriceVal,
+                              uint8_t*  gasLimitVal,
                               uint8_t* toStr,
                               uint8_t* valueStr,
                               uint8_t* dataStr,
                               uint32_t chainId);
 
-    vector<uint8_t> RlpEncodeForRawTransaction(uint32_t nonceVal,
-                                               uint64_t gasPriceVal,
-                                               uint32_t  gasLimitVal,
+    vector<uint8_t> RlpEncodeForRawTransaction(uint8_t* nonceVal,
+                                               uint8_t* gasPriceVal,
+                                               uint8_t*  gasLimitVal,
                                                uint8_t* toStr,
                                                uint8_t* valueStr,
                                                uint8_t* dataStr,

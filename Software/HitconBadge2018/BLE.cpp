@@ -2,33 +2,18 @@
 #include "epddisplay.hpp"
 #include "util.hpp"
 #include "wallet.hpp"
+#include "LFlash.h"
 
-LBLEService ExchangeService("48495443-4f4e-4241-4447-453230313810");
+
+
+LBLEService* ExchangeService;
 //deal with 20byte mtu
-LBLECharacteristicBuffer To_Address_Gatt("48495443-4f4e-4241-4447-453230313811", LBLE_WRITE); //20byte-RawAddress
-LBLECharacteristicBuffer Value_Gatt("48495443-4f4e-4241-4447-453230313813", LBLE_WRITE );    //1Wei
-LBLECharacteristicInt GasPrice_Gatt("48495443-4f4e-4241-4447-453230313814", LBLE_WRITE );    //1Wei
-LBLECharacteristicInt GasLimit_Gatt("48495443-4f4e-4241-4447-453230313815", LBLE_WRITE );    
-LBLECharacteristicInt Noice_Gatt("48495443-4f4e-4241-4447-453230313817", LBLE_WRITE );
-LBLECharacteristicString Txn_out_Gatt("48495443-4f4e-4241-4447-453230313818", LBLE_READ );
-
-
-LBLEService TokenService("48495443-4f4e-4241-4447-453230313840");
-//Token related
-LBLECharacteristicBuffer Token_to_address_Gatt("48495443-4f4e-4241-4447-453230313841", LBLE_WRITE );
-LBLECharacteristicBuffer Token_method_Gatt("48495443-4f4e-4241-4447-453230313842", LBLE_WRITE );
-LBLECharacteristicBuffer Token_Value_Gatt("48495443-4f4e-4241-4447-453230313843", LBLE_WRITE );
-
-//48495443-4f4e-4241-4447-45323031382x
-LBLEService RequestService("48495443-4f4e-4241-4447-453230313820");
-LBLECharacteristicBuffer WalletAddress_Gatt("48495443-4f4e-4241-4447-453230313821", LBLE_READ);
-LBLECharacteristicInt Balance_Gatt("48495443-4f4e-4241-4447-453230313823", LBLE_WRITE|LBLE_READ); //1Wei
-LBLECharacteristicInt NotifyRequest_Gatt("48495443-4f4e-4241-4447-453230313824", LBLE_READ);
-//48495443-4f4e-4241-4447-45323031383x
-LBLEService SettingService("48495443-4f4e-4241-4447-453230313830");
-LBLECharacteristicInt PinCode_Gatt("48495443-4f4e-4241-4447-453230313831", LBLE_READ);
-LBLECharacteristicString WiFiSSID_Gatt("48495443-4f4e-4241-4447-453230313832", LBLE_WRITE);
-LBLECharacteristicString WiFiPass_Gatt("48495443-4f4e-4241-4447-453230313833", LBLE_WRITE);
+LBLECharacteristicBuffer* Transaction_GATT; 
+LBLECharacteristicBuffer* Txn_GATT; 
+LBLECharacteristicBuffer* AddERC20_GATT; 
+LBLECharacteristicBuffer* Balance_GATT; 
+LBLECharacteristicBuffer* General_CMD_GATT; 
+LBLECharacteristicBuffer* General_Data_GATT; 
 
 void init_BLE(){
   // Initialize BLE subsystem
@@ -36,6 +21,55 @@ void init_BLE(){
   while (!LBLE.ready()) {
     delay(100);
   }
+
+
+  char ServiceUUID[37] = {0};
+  char Transaction_UUID[37] = {0};
+  char Txn_UUID[37] = {0};
+  char AddERC20_UUID[37] = {0};
+  char Balance_UUID[37] = {0};
+  char General_CMD_UUID[37] = {0};
+  char General_Data_UUID[37] = {0};
+  uint32_t size = 37;
+  LFlash.read("Wallet","Service_UUID",(uint8_t *)&ServiceUUID,&size);
+  LFlash.read("Wallet","Transaction",(uint8_t *)&Transaction_UUID,&size);
+  LFlash.read("Wallet","Txn",(uint8_t *)&Txn_UUID,&size);
+  LFlash.read("Wallet","AddERC20",(uint8_t *)&AddERC20_UUID,&size);
+  LFlash.read("Wallet","Balance",(uint8_t *)&Balance_UUID,&size);
+  LFlash.read("Wallet","General_CMD",(uint8_t *)&General_CMD_UUID,&size);
+  LFlash.read("Wallet","General_Data",(uint8_t *)&General_Data_UUID,&size);
+
+  uint8_t AES_key[16] = {0};
+  size = 16;
+  LFlash.read("Wallet","BLE_AES_key",(uint8_t *)&AES_key,&size);
+
+  Serial.println("LFLASH_Saved_UUID:");
+  Serial.println(ServiceUUID);
+  Serial.println(Transaction_UUID);
+  Serial.println(Txn_UUID);
+  Serial.println(AddERC20_UUID);
+  Serial.println(Balance_UUID);
+  Serial.println(General_CMD_UUID);
+  Serial.println(General_Data_UUID);
+
+  Serial.println("LFLASH_Saved_AESKey:");
+  for (int i = 0; i < 16; ++i)
+  {
+    Serial.print(AES_key[i],HEX);Serial.print(" ");
+  }
+  Serial.println();
+
+
+  Transaction_GATT = new LBLECharacteristicBuffer(Transaction_UUID, LBLE_WRITE); 
+  Txn_GATT = new LBLECharacteristicBuffer(Txn_UUID, LBLE_WRITE); 
+  AddERC20_GATT = new LBLECharacteristicBuffer(AddERC20_UUID, LBLE_WRITE); 
+  Balance_GATT = new LBLECharacteristicBuffer(Balance_UUID, LBLE_WRITE); 
+  General_CMD_GATT = new LBLECharacteristicBuffer(General_CMD_UUID, LBLE_WRITE); 
+  General_Data_GATT = new LBLECharacteristicBuffer(General_Data_UUID, LBLE_WRITE); 
+
+  ExchangeService = new LBLEService(ServiceUUID);
+  //LBLEService ExchangeService("48495443-4f4e-4241-4447-453230313810");
+
   Serial.println("BLE ready");
 
   Serial.print("Device Address = [");
@@ -52,40 +86,25 @@ void init_BLE(){
   // Ususally this is the same as the name in the advertisement data.
   LBLEPeripheral.setName("Wallet");
 
-  uint8_t buffer[20] = {0};
-  To_Address_Gatt.setValueBuffer(buffer,20);
-  Token_to_address_Gatt.setValueBuffer(buffer,20);
+  uint8_t buffer[128] = {0};
+  Transaction_GATT->setValueBuffer(buffer,128);
+  Txn_GATT->setValueBuffer(buffer,128);
+  AddERC20_GATT->setValueBuffer(buffer,128);
+  Balance_GATT->setValueBuffer(buffer,128);
+  General_CMD_GATT->setValueBuffer(buffer,128);
+  General_Data_GATT->setValueBuffer(buffer,128);
 
-  uint8_t buffer2[32] = {0};
-  Value_Gatt.setValueBuffer(buffer2,32);
-  Token_method_Gatt.setValueBuffer(buffer2,32);
-  Token_Value_Gatt.setValueBuffer(buffer2,32);
 
-  // Add characteristics into ledService
-  ExchangeService.addAttribute(To_Address_Gatt);
-  ExchangeService.addAttribute(Value_Gatt);
-  ExchangeService.addAttribute(GasPrice_Gatt);
-  ExchangeService.addAttribute(GasLimit_Gatt);
-  ExchangeService.addAttribute(Txn_out_Gatt);
-  ExchangeService.addAttribute(Noice_Gatt);
+  ExchangeService->addAttribute(*Transaction_GATT);
+  ExchangeService->addAttribute(*Txn_GATT);
+  ExchangeService->addAttribute(*AddERC20_GATT);
+  ExchangeService->addAttribute(*Balance_GATT);
+  ExchangeService->addAttribute(*General_CMD_GATT);
+  ExchangeService->addAttribute(*General_Data_GATT);
+  
 
-  TokenService.addAttribute(Token_to_address_Gatt);
-  TokenService.addAttribute(Token_method_Gatt);
-  TokenService.addAttribute(Token_Value_Gatt);
+  LBLEPeripheral.addService(*ExchangeService);
 
-  SettingService.addAttribute(PinCode_Gatt);
-  SettingService.addAttribute(WiFiSSID_Gatt);
-  SettingService.addAttribute(WiFiPass_Gatt);
-
-  RequestService.addAttribute(Balance_Gatt);
-  RequestService.addAttribute(WalletAddress_Gatt);
-  RequestService.addAttribute(NotifyRequest_Gatt);
-
-  // Add service to GATT server (peripheral)
-  LBLEPeripheral.addService(ExchangeService);
-  LBLEPeripheral.addService(TokenService);
-  LBLEPeripheral.addService(SettingService);
-  LBLEPeripheral.addService(RequestService);
   // start the GATT server - it is now 
   // available to connect
   LBLEPeripheral.begin();
@@ -95,69 +114,234 @@ void init_BLE(){
 
 }
 
+
+int parsing(uint8_t* data,uint8_t header, uint8_t buffersize, uint8_t expected_length, uint8_t* buffer,uint8_t data_pointer){
+
+    if (data[0] != header)
+    {
+      Serial.print("Header ERROR:");
+      Serial.println(data[0]);
+      return -1;
+    }
+    if (expected_length > 0)
+    {
+      if (data[1] != expected_length)
+      {
+        Serial.print("Length ERROR");
+        Serial.println(data[1]);
+        return -1;
+      }
+    }
+
+    if (data[1] > buffersize || data[1] >= 128-data_pointer)
+    {
+      Serial.println("Length ERROR");
+      return -1;
+    }
+    
+
+    uint8_t data_size = data[1];
+    memcpy(buffer,data+2,data_size);
+    return data_size;
+}
+
 void Process_BLE(){
 
-  if (To_Address_Gatt.isWritten() && Value_Gatt.isWritten() && Noice_Gatt.isWritten())
+  if (Transaction_GATT->isWritten())
   {
     
     Serial.println("New Transaction Get!");
-    uint8_t To_Address_Buffer[20] = {0};
-    To_Address_Gatt.getValue(To_Address_Buffer,20,0);
+    uint8_t Transaction_Buffer[128] = {0};
+    Transaction_GATT->getValue(Transaction_Buffer,128,0);
 
-    uint8_t * Value_Buffer;
-    uint8_t size = Value_Gatt.getLastWrittenInfo().size;
-    Value_Buffer = (uint8_t*)malloc(size);
-    Value_Gatt.getValue(Value_Buffer,size,0);
+    for (int i = 0; i < 100; ++i)
+    {
+      Serial.print(Transaction_Buffer[i],HEX);
+    }
+    Serial.println();
 
-    String To = ArraytoString(To_Address_Buffer,20);
-    String Value_str = ArraytoString(Value_Buffer,size);    
-    //String To = String(To_Address_Buffer,HEX);
-    //String Value_str = String(Value_Buffer,HEX);
+    uint8_t TO_Address[20] = {0};
+    uint8_t header_counter = 0;
+    //int parsing(uint8_t* data,uint8_t header, uint8_t buffersize, uint8_t expected_length, uint8_t* buffer){
+    int len = parsing(Transaction_Buffer+header_counter,0x01,20,20,TO_Address,header_counter);
+    if (len == -1)
+    {
+      Serial.println("Address Parse Error");
+      return;
+    }
+    String To = ArraytoString(TO_Address,20);
+    Serial.print("To Address:");Serial.println(To);
 
-    uint32_t Noice_int = Noice_Gatt.getValue();
-    uint64_t GasPrice_int = (uint64_t)GAS_PRICE;
-    uint32_t GasLimit_int = GAS_LIMIT;
-    String Data = "";
- 
-    Serial.print("TO:");Serial.println(To);
+    header_counter += len + 2;
+
+    uint8_t Value[32] = {0};
+    len = parsing(Transaction_Buffer+header_counter,0x02,32,0,Value,header_counter);
+    if (len == -1)
+    {
+      Serial.println("Value Parse Error");
+      return;
+    }
+    String Value_str = ArraytoString(Value,len);
     Serial.print("Value:");Serial.println(Value_str);
-    Serial.print("Noice:");Serial.println(Noice_int);
 
-    if(GasPrice_Gatt.isWritten()){
-      GasPrice_int =(uint64_t)GasPrice_Gatt.getValue()*(uint64_t)1000000000;
-      Serial.print("GasPrice(gwei):");Serial.println((uint32_t)(GasPrice_int/(uint64_t)1000000000));
+    header_counter += len + 2;
+
+    uint8_t GasPrice[32] = {0};
+    len = parsing(Transaction_Buffer+header_counter,0x03,32,0,GasPrice,header_counter);
+    if (len == -1)
+    {
+      Serial.println("GasPrice Parse Error");
+      return;
     }
-    if(GasLimit_Gatt.isWritten()){
-      GasLimit_int = GasLimit_Gatt.getValue();
-      Serial.print("GasLimit:");Serial.println(GasLimit_int);      
+    String GasPrice_str = ArraytoString(GasPrice,len);
+    Serial.print("GasPrice:");Serial.println(GasPrice_str);
+    header_counter += len + 2;
+    
+    uint8_t GasLimit[32] = {0};
+    len = parsing(Transaction_Buffer+header_counter,0x04,32,0,GasLimit,header_counter);
+    if (len == -1)
+    {
+      Serial.println("GasLimit Parse Error");
+      return;
     }
-    if(Token_method_Gatt.isWritten() && Token_to_address_Gatt.isWritten() && Token_Value_Gatt.isWritten()){
-      Serial.println("Token Transfer Get!");
-      uint8_t Token_To_Address_Buffer[20] = {0};
-      Token_to_address_Gatt.getValue(Token_To_Address_Buffer,20,0);
+    String GasLimit_str = ArraytoString(GasLimit,len);
+    Serial.print("GasLimit:");Serial.println(GasLimit_str);
+    header_counter += len + 2;
 
-      uint8_t * Token_Value_Buffer;
-      uint8_t size_Token_Value_Buffer = Token_Value_Gatt.getLastWrittenInfo().size;
-      Token_Value_Buffer = (uint8_t*)malloc(size_Token_Value_Buffer);
-      Token_Value_Gatt.getValue(Token_Value_Buffer,size_Token_Value_Buffer,0);
+    uint8_t Noice[32] = {0};
+    len = parsing(Transaction_Buffer+header_counter,0x05,32,0,Noice,header_counter);
+    if (len == -1)
+    {
+      Serial.println("Noice Parse Error");
+      return;
+    }
+    String Noice_str = ArraytoString(Noice,len);
+    Serial.print("Noice:");Serial.println(Noice_str);
+    header_counter += len + 2;
 
-      uint8_t * Token_method_Buffer;
-      uint8_t size_Token_method_Buffer = Token_method_Gatt.getLastWrittenInfo().size;
-      Token_method_Buffer = (uint8_t*)malloc(size_Token_method_Buffer);
-      Token_method_Gatt.getValue(Token_method_Buffer,size_Token_method_Buffer,0);
+    uint8_t Data[100] = {0};
+    len = parsing(Transaction_Buffer+header_counter,0x06,100,0,Data,header_counter);
+    if (len == -1)
+    {
+      Serial.println("Data Parse Error");
+      return;
+    }
+    String Data_str = ArraytoString(Data,len);
+    Serial.print("Data:");Serial.println(Data_str);
 
-      Serial.print("Token TO:");Serial.println(ArraytoString(Token_To_Address_Buffer,20));
-      Serial.print("Token Method:");Serial.println(ArraytoString(Token_method_Buffer,size_Token_method_Buffer,4));
-      Serial.print("Token Value:");Serial.println(ArraytoString(Token_Value_Buffer,size_Token_Value_Buffer));
+    uint8_t Txn_buffer[256] = {0};
+    uint8_t Txn_len = start_transaction(Txn_buffer,publicAddress_string,To,Value_str,Data_str,GasPrice_str,GasLimit_str,Noice_str);
+    Serial.print("Txn Length:");Serial.println(Txn_len);
+    Txn_GATT->setValueBuffer(Txn_buffer,Txn_len);
+    LBLEPeripheral.notifyAll(*Txn_GATT);
+    
+  }
+  if (AddERC20_GATT->isWritten())
+  {
+    Serial.println("New AddERC20 Get!");
+    uint8_t AddERC20_buffer[128] = {0};
+    AddERC20_GATT->getValue(AddERC20_buffer,128,0);
+    Serial.println((char*)AddERC20_buffer);
+    for (int i = 0; i < 100; ++i)
+    {
+      Serial.print(AddERC20_buffer[i],HEX);
+    }
+    Serial.println();
 
-      Data = ArraytoString(Token_method_Buffer,size_Token_method_Buffer,4)+ArraytoString(Token_To_Address_Buffer,20,32)+ArraytoString(Token_Value_Buffer,size_Token_Value_Buffer,32);
-
-      Serial.print("Data:");Serial.println(Data);
+    uint8_t header_counter = 0x10;
+    uint8_t size = 128;
+    if (AddERC20_buffer[0] != 0x10)
+    {
+      Serial.println("ERC20 Contract Address header ERROR");
+      return;
+    }
+    if (AddERC20_buffer[1] != 0x14)
+    {
+      Serial.println("ERC20 Contract Address Length ERROR");
+      return;
     }
 
-    String Txn = start_transaction(publicAddress_string,To,Value_str,Data,GasPrice_int,GasLimit_int,Noice_int);
-    Serial.print("Txn_out:");Serial.println(Txn);
-    Txn_out_Gatt.setValue(Txn);
-    LBLEPeripheral.notifyAll(Txn_out_Gatt);
+    uint8_t ERC20_Address[20] = {0};
+    memcpy(ERC20_Address,AddERC20_buffer+2,20);
+
+    uint8_t methods[6][4] = {0};
+    for (int i = 0; i < 6; ++i)
+    {
+      Serial.println(i);
+      if (AddERC20_buffer[22+i*6] != (0x11+i))
+      {
+        Serial.println("ERC20 Contract method header ERROR");
+        return;
+      }
+      if (AddERC20_buffer[22+i*6+1] != 0x4)
+      {
+        Serial.println("ERC20 Contract method Length ERROR");
+        return;
+      }
+      memcpy(methods[i],AddERC20_buffer+22+i*6+2,4);
+    }
+
+    Serial.print("Contract Address:");Serial.println(ArraytoString(ERC20_Address,20));
+    Serial.print("TotalSupply Method:");Serial.println(ArraytoString(methods[0],4));
+    Serial.print("BalanceOf Method:");Serial.println(ArraytoString(methods[1],4));
+    Serial.print("Transfer Method:");Serial.println(ArraytoString(methods[2],4));
+    Serial.print("TransferFrom Method:");Serial.println(ArraytoString(methods[3],4));
+    Serial.print("Approve Method:");Serial.println(ArraytoString(methods[4],4));
+    Serial.print("Name:");Serial.println((char*)methods[5]);
+    
+  }
+  if (Balance_GATT->isWritten())
+  {
+    Serial.println("New Balance Get!");
+    uint8_t Balance_buffer[128] = {0};
+    Balance_GATT->getValue(Balance_buffer,128,0);
+    for (int i = 0; i < 100; ++i)
+    {
+      Serial.print(Balance_buffer[i],HEX);
+    }
+    Serial.println();
+
+    uint8_t header_counter = 0x00;
+    uint8_t size = 128;
+    if (Balance_buffer[0] != 0x00)
+    {
+      Serial.println("Address header ERROR");
+      return;
+    }
+    if (Balance_buffer[1] != 0x14)
+    {
+      Serial.println("Address Length ERROR");
+      return;
+    }
+    uint8_t Address[20] = {0};
+    memcpy(Address,Balance_buffer+2,20);
+    if (Balance_buffer[22] != 0x00)
+    {
+      Serial.println("Value header ERROR");
+      return;
+    }
+    if (Balance_buffer[23] > 128-24)
+    {
+      Serial.println("Value Length ERROR");
+      return;
+    }
+    uint8_t Value_size = Balance_buffer[23];
+    uint8_t Value[32] = {0};
+    memcpy(Value,Balance_buffer+24,Value_size);
+
+    Serial.println("Update Balance:");
+    Serial.print("Address: ");    
+    for (int i = 0; i < 20; ++i)
+    {
+      Serial.print(Address[i],HEX);
+    }
+    Serial.println();
+
+    Serial.print("Value: ");    
+    for (int i = 0; i < Value_size; ++i)
+    {
+      Serial.print(Value[i],HEX);
+    }
+    Serial.println();
   }
 }

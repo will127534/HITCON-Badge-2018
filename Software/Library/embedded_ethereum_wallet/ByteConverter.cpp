@@ -43,6 +43,7 @@ vector<uint8_t> ByteConverter::charStrToBytes(const uint8_t *in) {
     }
 
     size_t lenstr = strlen(ptr);
+
     for (int i=0; i<lenstr; i+=2) {
         char c[3];
         c[0] = *(ptr+i);

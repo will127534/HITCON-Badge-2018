@@ -30,6 +30,7 @@ void init_hardware(){
       Serial.println("Flash init failed.");
       return;
   }
+  randomNumbergenerator_init();
 }
 
 void setup(void)

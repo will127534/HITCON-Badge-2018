@@ -27,19 +27,27 @@ void init_se(){
     // Now we can start building up the transaction itself
     Transaction transaction;
     transaction.setPrivateKey((uint8_t*)PRIVATE_KEY);
-    Balance_Gatt.setValue(read_balance());
-    WalletAddress_Gatt.setValueBuffer(&publicAddress[0],20);
+    //Balance_Gatt.setValue(read_balance());
+   // WalletAddress_Gatt.setValueBuffer(&publicAddress[0],20);
 }
-String start_transaction(String from,String to, String value, String data, uint64_t gasPrice, uint32_t gasLimit, uint32_t nonce){
+uint8_t start_transaction(uint8_t* outputdata, String from,String to, String value, String data, String gasPrice, String gasLimit, String nonce){
   
     Transaction transaction;
     transaction.setPrivateKey((uint8_t*)PRIVATE_KEY);
 
-    vector<uint8_t> rawTransaction = transaction.getRaw(nonce, gasPrice, gasLimit, (uint8_t*)to.c_str(), (uint8_t*)value.c_str(), (uint8_t*)data.c_str(), CHAIN_ID);
-    String raw_tx = vector2string(rawTransaction);
-    Serial.print("Raw Tx:");
-    Serial.println(raw_tx);
-    return raw_tx;
+    vector<uint8_t> rawTransaction = transaction.getRaw((uint8_t*)nonce.c_str(), (uint8_t*)gasPrice.c_str(), (uint8_t*)gasLimit.c_str(), (uint8_t*)to.c_str(), (uint8_t*)value.c_str(), (uint8_t*)data.c_str(), CHAIN_ID);
+    //String raw_tx = vector2string(rawTransaction);
+
+    if (rawTransaction.size()>256)
+    {
+        return 0;
+    }
+
+    std::copy(rawTransaction.begin(), rawTransaction.end(), outputdata);
+    Serial.print("Txn out:");
+    print_vector(rawTransaction);
+    Serial.println();
+    return rawTransaction.size();
 }
 
 uint64_t read_balance(){

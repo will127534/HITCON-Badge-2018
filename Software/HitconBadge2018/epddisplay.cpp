@@ -25,8 +25,8 @@ void init_display(){
   display.setRotation(3);
   // draw background
 
-  display.updateWindow(0, 0, GxEPD_WIDTH, GxEPD_HEIGHT, true);
-  delay(1000);
+  //display.updateWindow(0, 0, GxEPD_WIDTH, GxEPD_HEIGHT, true);
+  //delay(1000);
   display.fillScreen(GxEPD_WHITE);
   display.update();
   delay(1000);
@@ -117,19 +117,91 @@ void BLE_pairing(){
   display.fillScreen(GxEPD_WHITE);
   display_static();
   display.setCursor(10, 60);
-  uint32_t pin_code = randomNumbergenerator(6);
-  display.setFont(&Roboto_Medium12pt7b);
-  display.print("Piring Code:");display.println(pin_code);
+
   display.setCursor(0,122-7);
   display.setFont(&Roboto_Medium8pt7b);
   display.println("[A]:Return");
+  
+
+
+  uint32_t AES_key[4] = {0};
+  for (int i = 0; i < 4; ++i)
+  {
+    AES_key[i] = randomUint32_t_generator();
+  }
+
+  char ServiceUUID[37]= {0};
+  random_UUID_generator(ServiceUUID);
+  char ServiceUUIDHead[9]= {0};
+  memcpy(ServiceUUIDHead,ServiceUUID,8);
+  Serial.print("Service UUID:");Serial.println(ServiceUUID);
+  char UUIDs[6][37] = {0};
+  char UUIDHead[6][9] = {0};
+
+
+
+  for (uint8_t i = 0; i < 6; ++i)
+  {
+    random_UUID_generator(UUIDs[i]);
+    Serial.print("UUID:");Serial.println(UUIDs[i]);
+    memcpy(UUIDHead[i],UUIDs[i],8);
+    Serial.print("UUID head:");Serial.println(UUIDHead[i]);
+    for (uint8_t j = 0; j < 6; ++j)
+    {
+      if (String(UUIDHead[i]) == String(UUIDHead[j]) && j!=i)
+      {
+         Serial.println(j);
+         Serial.println(i);
+         Serial.println(UUIDHead[j]);
+         i = i-1;
+      }
+    }
+  }
+
+  LFlash.write("Wallet","Service_UUID",LFLASH_RAW_DATA,(const uint8_t *)&ServiceUUID,sizeof(ServiceUUID));
+  LFlash.write("Wallet","Transaction",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[0],sizeof(UUIDs[0]));
+  LFlash.write("Wallet","Txn",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[1],sizeof(UUIDs[1]));
+  LFlash.write("Wallet","AddERC20",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[2],sizeof(UUIDs[2]));
+  LFlash.write("Wallet","Balance",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[3],sizeof(UUIDs[3]));
+  LFlash.write("Wallet","General_CMD",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[4],sizeof(UUIDs[4]));
+  LFlash.write("Wallet","General_Data",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[5],sizeof(UUIDs[5]));
+
+  LFlash.write("Wallet","BLE_AES_key",LFLASH_RAW_DATA,(const uint8_t *)&AES_key,sizeof(AES_key));
+  
+  String AES_key_string = "";
+  char AES_key_buffer[180] = {0};
+
+  sprintf (AES_key_buffer, "Hitcon://?v=18&a=%s&k=%08x%08x%08x%08x&s=%s&c=%s%s%s%s%s%s",publicAddress_string.c_str(), AES_key[0], AES_key[1], AES_key[2], AES_key[3],ServiceUUIDHead,UUIDHead[0],UUIDHead[1],UUIDHead[2],UUIDHead[3],UUIDHead[4],UUIDHead[5]);
+
+  Serial.print("AES_key:");Serial.println(AES_key_buffer);
+
+//HitconBadge2018://?address=808c2257d778e5f1340d9325116f5a7273b33f5d?key=F12D9A8CA89EC63C16F393066A956D66?SerUUID=B039B324?Charastic=22A0442C23DB270532550656AE6BC4C6AAA17C9BCE38AA8B
+
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(7)];
+  qrcode_initText(&qrcode, qrcodeData, 7, ECC_LOW, AES_key_buffer);
+
+  int x0 = 75;
+  int y0 = 25;
+  int expension = 2;
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+      for (uint8_t x = 0; x < qrcode.size; x++) {
+          if (qrcode_getModule(&qrcode, x, y)) {
+            display.fillRect(x0+x*expension,y0+y*expension,expension,expension,GxEPD_BLACK);
+          }else{
+            display.fillRect(x0+x*expension,y0+y*expension,expension,expension,GxEPD_WHITE);
+          }
+      }
+  }
+
   display.update();
 
-  LFlash.write("Wallet","BLE_paircode",LFLASH_RAW_DATA,(const uint8_t *)&pin_code,sizeof(pin_code));
+
+ 
 
   while(1){
     if(readButton()==0xA){
-      return;
+     WDT_Reset();
     }
   }
 

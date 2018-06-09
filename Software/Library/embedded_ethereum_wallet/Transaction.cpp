@@ -35,7 +35,7 @@ void Transaction::setPrivateKey(const uint8_t *key) {
     privateKey = key;
 }
 
-vector<uint8_t> Transaction::getRaw(uint32_t nonceVal, uint64_t gasPriceVal, uint32_t  gasLimitVal,
+vector<uint8_t> Transaction::getRaw(uint8_t * nonceVal,  uint8_t * gasPriceVal,  uint8_t *  gasLimitVal,
                                  uint8_t *toStr, uint8_t *valueStr, uint8_t *dataStr, uint32_t chainId) {
     uint8_t signature[SIGNATURE_LENGTH];
     memset(signature, 0, SIGNATURE_LENGTH);
@@ -58,19 +58,17 @@ vector<uint8_t> Transaction::getRaw(uint32_t nonceVal, uint64_t gasPriceVal, uin
 
 void Transaction::GenerateSignature(uint8_t* signature,
                                  int* recoveryId,
-                                 uint32_t nonceVal,
-                                 uint64_t gasPriceVal,
-                                 uint32_t gasLimitVal,
+                                 uint8_t * nonceVal,
+                                 uint8_t * gasPriceVal,
+                                 uint8_t * gasLimitVal,
                                  uint8_t* toStr,
                                  uint8_t* valueStr,
                                  uint8_t* dataStr,
                                  uint32_t chainId) {
     // Encode
     vector<uint8_t> rlpEncoded = RlpEncode(nonceVal, gasPriceVal, gasLimitVal, toStr, valueStr, dataStr, chainId);
-
     // Hash
     vector<uint8_t> transactionHash = CryptoHelper::keccak256(&rlpEncoded[0], rlpEncoded.size());
-
     // Sign
     Sign(&transactionHash[0], signature, recoveryId);
 }
@@ -162,11 +160,11 @@ String Transaction::GenerateBytesForBytes(const char* value, const int len) {
     return String(output);
 }
 */
-vector<uint8_t> Transaction::RlpEncode(uint32_t nonceVal, uint64_t gasPriceVal, uint32_t  gasLimitVal,
+vector<uint8_t> Transaction::RlpEncode(uint8_t * nonceVal, uint8_t * gasPriceVal, uint8_t *  gasLimitVal,
                                     uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint32_t chainIdStr) {
-    vector<uint8_t> nonce = ByteConverter::numberToBytes(nonceVal);
-    vector<uint8_t> gasPrice = ByteConverter::numberToBytes(gasPriceVal);
-    vector<uint8_t> gasLimit = ByteConverter::numberToBytes(gasLimitVal);
+    vector<uint8_t> nonce = ByteConverter::charStrToBytes(nonceVal);
+    vector<uint8_t> gasPrice = ByteConverter::charStrToBytes(gasPriceVal);
+    vector<uint8_t> gasLimit = ByteConverter::charStrToBytes(gasLimitVal);
     vector<uint8_t> to = ByteConverter::charStrToBytes(toStr);
     vector<uint8_t> value = ByteConverter::charStrToBytes(valueStr);
     vector<uint8_t> data = ByteConverter::charStrToBytes(dataStr);
@@ -211,7 +209,7 @@ void Transaction::Sign(uint8_t* hash, uint8_t* sig, int* recid) {
 }
 
 vector<uint8_t> Transaction::RlpEncodeForRawTransaction(
-                             uint32_t nonceVal, uint64_t gasPriceVal, uint32_t gasLimitVal,
+                             uint8_t* nonceVal, uint8_t* gasPriceVal, uint8_t* gasLimitVal,
                              uint8_t* toStr, uint8_t* valueStr, uint8_t* dataStr, uint32_t chainIdStr, uint8_t* sig, uint8_t recoveryId) {
 
     vector<uint8_t> signature;
@@ -219,9 +217,9 @@ vector<uint8_t> Transaction::RlpEncodeForRawTransaction(
         signature.push_back(sig[i]);
     }
 
-    vector<uint8_t> nonce = ByteConverter::numberToBytes(nonceVal);
-    vector<uint8_t> gasPrice = ByteConverter::numberToBytes(gasPriceVal);
-    vector<uint8_t> gasLimit = ByteConverter::numberToBytes(gasLimitVal);
+    vector<uint8_t> nonce = ByteConverter::charStrToBytes(nonceVal);
+    vector<uint8_t> gasPrice = ByteConverter::charStrToBytes(gasPriceVal);
+    vector<uint8_t> gasLimit = ByteConverter::charStrToBytes(gasLimitVal);
     vector<uint8_t> to = ByteConverter::charStrToBytes(toStr);
     vector<uint8_t> value = ByteConverter::charStrToBytes(valueStr);
     vector<uint8_t> data = ByteConverter::charStrToBytes(dataStr);

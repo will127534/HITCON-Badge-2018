@@ -1,6 +1,8 @@
 #include "util.hpp"
 #include "Arduino.h"
 #include "hal_trng.h"
+#include "hal_wdt.h"
+
 
 String ArraytoString(uint8_t* buffer,uint32_t len,uint32_t String_len){
   if (String_len<len)
@@ -50,10 +52,51 @@ String vector2string(std::vector<uint8_t> VEC){
     }
   return s;
 }
+void randomNumbergenerator_init(){
+  hal_trng_status_t ret = hal_trng_init();
+}
 uint32_t randomNumbergenerator(uint8_t digit){
   uint32_t number = 0;
   uint32_t max = pow(10,digit);
-  hal_trng_status_t ret = hal_trng_init();
+  
   hal_trng_get_generated_random_number(&number); 
   return number%max;
+}
+
+uint32_t randomUint32_t_generator(){
+  uint32_t number = 0;
+  hal_trng_get_generated_random_number(&number); 
+  return number;
+}
+
+
+void random_UUID_generator(char* array){
+  uint32_t number[4] = {0};
+  for (int i = 0; i < 4; ++i)
+  {
+    hal_trng_get_generated_random_number(&number[i]); 
+  }
+
+  uint16_t buffer[4] = {0};
+  buffer[0] = number[1]>>16;
+  buffer[1] = number[1];
+  buffer[2] = number[2]>>16;
+  buffer[3] = number[2];
+  
+
+  sprintf (array, "%08x-%04x-%04x-%04x-%04x%08x",number[0], buffer[0], buffer[1],buffer[2],buffer[3], number[3]);
+  //Serial.println((char*)array);
+}
+
+void WDT_Reset(){
+  Serial.println("Reset");
+  pinMode(A0,OUTPUT);
+  hal_wdt_software_reset();
+  while(1){
+    digitalWrite(A0,HIGH);
+    delay(100);
+    digitalWrite(A0,LOW);
+    delay(100);
+
+  }
 }
