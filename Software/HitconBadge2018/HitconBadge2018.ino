@@ -50,5 +50,10 @@ void loop()
     setting_menu();
     main_menu();
   }
+  if (NewBalanceFlag)
+  {
+    NewBalanceFlag = 0;
+    main_menu();
+  }
   Process_BLE();
 }

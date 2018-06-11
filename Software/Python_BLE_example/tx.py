@@ -5,7 +5,7 @@ import time
 import binascii
 import sys
 
-input_str = "Hitcon://?v=18&a=808c2257d778e5f1340d9325116f5a7273b33f5d&k=21d7c74ce70d43584f73edb6f740df90&s=fb011e71&c=22ed15ec80c1fe338992ff84a867abd2865a7e4bc86ab57f"
+input_str = "Hitcon://pair?v=18&a=808c2257d778e5f1340d9325116f5a7273b33f5d&k=4ede7bd3354fd666142f7ab6ed7c5872&s=e4cf2e34-69d2-1cb9-06be-76dd1d559314&c=040b1003db43bd05dbe669023d12ce6b6ef2a77ae03e63bd"
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
@@ -47,7 +47,7 @@ print(p.setMTU(1000)) #not actually changing MTU
 
 Address = input_str.split("&")[1].split("=")[1]
 AES_Key = input_str.split("&")[2].split("=")[1]
-Service_UUID_HEAD = input_str.split("&")[3].split("=")[1]
+Service_UUID = input_str.split("&")[3].split("=")[1]
 TotalChar_UUID = [input_str.split("&")[4].split("=")[1][i:i+8] for i in range(0, len(input_str.split("&")[4].split("=")[1]), 8)]
 
 
@@ -58,14 +58,8 @@ MainCharacteristics_head = {"Transaction_UUID":TotalChar_UUID[0],"Txn_UUID":Tota
 MainCharacteristics = {"Transaction_UUID":"","Txn_UUID":"","AddERC20_UUID":"","Balance_UUID":"","General_CMD_UUID":"","General_Data_UUID":""}
 
 
-main_service = ""
-for service in p.getServices():
-  print(service.uuid)
-  if service.uuid.getCommonName().startswith(Service_UUID_HEAD):
-    print("Service Get")
-    main_service = service.uuid.getCommonName()
 
-service = p.getServiceByUUID(main_service)
+service = p.getServiceByUUID(Service_UUID)
 
 
 for Character in service.getCharacteristics():

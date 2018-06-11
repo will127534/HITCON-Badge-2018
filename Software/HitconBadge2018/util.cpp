@@ -88,6 +88,14 @@ void random_UUID_generator(char* array){
   //Serial.println((char*)array);
 }
 
+void random_UUID_generator_head(char* array){
+  uint32_t number = 0;
+  hal_trng_get_generated_random_number(&number); 
+  sprintf (array, "%08x",number);
+  //Serial.println((char*)array);
+}
+
+
 void WDT_Reset(){
   Serial.println("Reset");
   pinMode(A0,OUTPUT);

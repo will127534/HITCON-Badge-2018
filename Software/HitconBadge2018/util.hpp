@@ -11,5 +11,6 @@ void randomNumbergenerator_init();
 uint32_t randomNumbergenerator(uint8_t digit);
 uint32_t randomUint32_t_generator();
 void random_UUID_generator(char* array);
+void random_UUID_generator_head(char* array);
 void WDT_Reset();
 #endif // _util_hpp_

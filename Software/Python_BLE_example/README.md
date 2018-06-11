@@ -15,8 +15,17 @@ python3 ./tx.py TO_ADDRESS Amount GasValue GasLimit Noice Data
 #Data => Raw Data Package
 #如果要做token交易，請把TO-Address代入Token address，同時帶入ERC20的資料
 #EX:sudo python3 ./tx.py 1e37af84b385e47b87f493ab187e6a764162a35a 0.1 50 50000 17 00
+
+
+
+python3 ./updateBalance.py ADDRESS Amount 
+#TO_ADDRESS=>對方地址的HEX去掉0x
+#Amount => 四位ASCII，直接顯示在Main Menu上面
+#EX:sudo python3 ./updateBalance.py 1e37af84b385e47b87f493ab187e6a764162a35a 0.10
+
+
 ```
 
-執行完之後會拿到簽章完畢的交易資料，如下圖
+Tx.py執行完之後會拿到簽章完畢的交易資料，如下圖
 ![](https://i.imgur.com/vMfoSq0.png)
 

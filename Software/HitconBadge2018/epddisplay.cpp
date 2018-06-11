@@ -51,7 +51,12 @@ void main_menu(){
   display.setCursor(10, 50);
   display.println("Balance:");
   display.setCursor(10, 80);
-  display.println("1.75 ETH");
+
+  char Balance[5] = {0};
+  uint32_t size = 4;
+  LFlash.read("Wallet","Balance",(uint8_t *)&Balance,&size);
+  display.print(Balance);
+  display.println(" ETH");
 
   display.setFont(&Roboto_Medium8pt7b);
   
@@ -120,10 +125,8 @@ void BLE_pairing(){
 
   display.setCursor(0,122-7);
   display.setFont(&Roboto_Medium8pt7b);
-  display.println("[A]:Return");
+  display.println("[A]:Reset");
   
-
-
   uint32_t AES_key[4] = {0};
   for (int i = 0; i < 4; ++i)
   {
@@ -135,17 +138,15 @@ void BLE_pairing(){
   char ServiceUUIDHead[9]= {0};
   memcpy(ServiceUUIDHead,ServiceUUID,8);
   Serial.print("Service UUID:");Serial.println(ServiceUUID);
-  char UUIDs[6][37] = {0};
+
   char UUIDHead[6][9] = {0};
 
 
 
   for (uint8_t i = 0; i < 6; ++i)
   {
-    random_UUID_generator(UUIDs[i]);
-    Serial.print("UUID:");Serial.println(UUIDs[i]);
-    memcpy(UUIDHead[i],UUIDs[i],8);
-    Serial.print("UUID head:");Serial.println(UUIDHead[i]);
+    random_UUID_generator_head(UUIDHead[i]);
+    Serial.print("UUID Head:");Serial.println(UUIDHead[i]);
     for (uint8_t j = 0; j < 6; ++j)
     {
       if (String(UUIDHead[i]) == String(UUIDHead[j]) && j!=i)
@@ -155,34 +156,41 @@ void BLE_pairing(){
          Serial.println(UUIDHead[j]);
          i = i-1;
       }
+      if (String(UUIDHead[i]) == String(ServiceUUIDHead[j]))
+      {
+        Serial.println(i);
+        Serial.println("ServiceUUID");
+        i = i-1;
+      }
     }
   }
 
-  LFlash.write("Wallet","Service_UUID",LFLASH_RAW_DATA,(const uint8_t *)&ServiceUUID,sizeof(ServiceUUID));
-  LFlash.write("Wallet","Transaction",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[0],sizeof(UUIDs[0]));
-  LFlash.write("Wallet","Txn",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[1],sizeof(UUIDs[1]));
-  LFlash.write("Wallet","AddERC20",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[2],sizeof(UUIDs[2]));
-  LFlash.write("Wallet","Balance",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[3],sizeof(UUIDs[3]));
-  LFlash.write("Wallet","General_CMD",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[4],sizeof(UUIDs[4]));
-  LFlash.write("Wallet","General_Data",LFLASH_RAW_DATA,(const uint8_t *)&UUIDs[5],sizeof(UUIDs[5]));
+  LFlash.write("BLE","Service_UUID",LFLASH_RAW_DATA,(const uint8_t *)&ServiceUUID,sizeof(ServiceUUID));
+  LFlash.write("BLE","Transaction",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[0],8);
+  LFlash.write("BLE","Txn",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[1],8);
+  LFlash.write("BLE","AddERC20",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[2],8);
+  LFlash.write("BLE","Balance",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[3],8);
+  LFlash.write("BLE","General_CMD",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[4],8);
+  LFlash.write("BLE","General_Data",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[5],8);
 
-  LFlash.write("Wallet","BLE_AES_key",LFLASH_RAW_DATA,(const uint8_t *)&AES_key,sizeof(AES_key));
+  LFlash.write("BLE","BLE_AES_key",LFLASH_RAW_DATA,(const uint8_t *)&AES_key,sizeof(AES_key));
   
-  String AES_key_string = "";
-  char AES_key_buffer[180] = {0};
 
-  sprintf (AES_key_buffer, "Hitcon://?v=18&a=%s&k=%08x%08x%08x%08x&s=%s&c=%s%s%s%s%s%s",publicAddress_string.c_str(), AES_key[0], AES_key[1], AES_key[2], AES_key[3],ServiceUUIDHead,UUIDHead[0],UUIDHead[1],UUIDHead[2],UUIDHead[3],UUIDHead[4],UUIDHead[5]);
+  char AES_key_buffer[200] = {0};
 
-  Serial.print("AES_key:");Serial.println(AES_key_buffer);
+  sprintf (AES_key_buffer, "Hitcon://pair?v=18&a=%s&k=%08x%08x%08x%08x&s=%s&c=%s%s%s%s%s%s",publicAddress_string.c_str(), AES_key[0], AES_key[1], AES_key[2], AES_key[3],ServiceUUID,UUIDHead[0],UUIDHead[1],UUIDHead[2],UUIDHead[3],UUIDHead[4],UUIDHead[5]);
 
+  Serial.print("QR:");Serial.println(AES_key_buffer);
+  Serial.println(qrcode_getBufferSize(8));
 //HitconBadge2018://?address=808c2257d778e5f1340d9325116f5a7273b33f5d?key=F12D9A8CA89EC63C16F393066A956D66?SerUUID=B039B324?Charastic=22A0442C23DB270532550656AE6BC4C6AAA17C9BCE38AA8B
+//Hitcon://pair?v=18&a=808c2257d778e5f1340d9325116f5a7273b33f5d&k=45ec209bc5aa6ec32aae7db226952cad&s=fcf2881e-110e-4dbb-d110-4ca507163e0b&c=c51612c39bd5dc0d5189bbacae88b8293aef4bc5d6006c4a
 
   QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(7)];
-  qrcode_initText(&qrcode, qrcodeData, 7, ECC_LOW, AES_key_buffer);
+  uint8_t qrcodeData[qrcode_getBufferSize(8)];
+  qrcode_initText(&qrcode, qrcodeData, 8, ECC_LOW, AES_key_buffer);
 
   int x0 = 75;
-  int y0 = 25;
+  int y0 = 23;
   int expension = 2;
   for (uint8_t y = 0; y < qrcode.size; y++) {
       for (uint8_t x = 0; x < qrcode.size; x++) {
@@ -195,9 +203,6 @@ void BLE_pairing(){
   }
 
   display.update();
-
-
- 
 
   while(1){
     if(readButton()==0xA){
