@@ -3,7 +3,7 @@
 #include "util.hpp"
 #include "wallet.hpp"
 #include "LFlash.h"
-
+#include <LWiFi.h>
 
 
 LBLEService* ExchangeService;
@@ -23,7 +23,18 @@ void init_BLE(){
   while (!LBLE.ready()) {
     delay(100);
   }
+  //delay(5000);
+  WiFi.end();
 
+
+  bool changed = 0;
+  uint32_t size = 1;
+  LFlashStatus status = LFlash.read("BLE","NewSetting",(uint8_t *)&changed,&size);
+  Serial.print("Changed:");Serial.println(changed);
+  if (changed==1 || status == LFLASH_ITEM_NOT_FOUND)
+  {
+    regenerate_BLE_parameter();
+  }
 
   char ServiceUUID[37] = {0};
   char Transaction_UUID[37] = {0};
@@ -32,7 +43,7 @@ void init_BLE(){
   char Balance_UUID[37] = {0};
   char General_CMD_UUID[37] = {0};
   char General_Data_UUID[37] = {0};
-  uint32_t size = 37;
+  size = 37;
 
   LFlash.read("BLE","Service_UUID",(uint8_t *)&ServiceUUID,&size);
 
@@ -43,7 +54,7 @@ void init_BLE(){
   memcpy((uint8_t *)General_CMD_UUID,(uint8_t *)ServiceUUID,37);
   memcpy((uint8_t *)General_Data_UUID,(uint8_t *)ServiceUUID,37);
 
-   size = 8;
+  size = 8;
   LFlash.read("BLE","Transaction",(uint8_t *)&Transaction_UUID,&size);
   LFlash.read("BLE","Txn",(uint8_t *)&Txn_UUID,&size);
   LFlash.read("BLE","AddERC20",(uint8_t *)&AddERC20_UUID,&size);
@@ -71,7 +82,6 @@ void init_BLE(){
   }
   Serial.println();
 
-
   Transaction_GATT = new LBLECharacteristicBuffer(Transaction_UUID, LBLE_WRITE); 
   Txn_GATT = new LBLECharacteristicBuffer(Txn_UUID, LBLE_WRITE); 
   AddERC20_GATT = new LBLECharacteristicBuffer(AddERC20_UUID, LBLE_WRITE); 
@@ -92,11 +102,11 @@ void init_BLE(){
   // In this case, we simply create an advertisement that represents an
   // connectable device with a device name
   LBLEAdvertisementData advertisement;
-  advertisement.configAsConnectableDevice("Wallet");
+  advertisement.configAsConnectableDevice("",ServiceUUID);
 
   // Configure our device's Generic Access Profile's device name
   // Ususally this is the same as the name in the advertisement data.
-  LBLEPeripheral.setName("Wallet");
+  //LBLEPeripheral.setName("");
 
   uint8_t buffer[128] = {0};
   Transaction_GATT->setValueBuffer(buffer,128);
@@ -124,7 +134,14 @@ void init_BLE(){
   // start advertisment
   LBLEPeripheral.advertise(advertisement);
 
+
+  if (changed)
+  {
+    display_paringQR();
+  }
+
 }
+
 
 
 int parsing(uint8_t* data,uint8_t header, uint8_t buffersize, uint8_t expected_length, uint8_t* buffer,uint8_t data_pointer){
@@ -246,6 +263,10 @@ void Process_BLE(){
     Serial.print("Txn Length:");Serial.println(Txn_len);
     Txn_GATT->setValueBuffer(Txn_buffer,Txn_len);
     LBLEPeripheral.notifyAll(*Txn_GATT);
+
+    uint8_t buffer[128] = {0};
+    Transaction_GATT->setValueBuffer(buffer,128);
+    Txn_GATT->setValueBuffer(buffer,128);
     
   }
   if (AddERC20_GATT->isWritten())
@@ -300,6 +321,10 @@ void Process_BLE(){
     Serial.print("TransferFrom Method:");Serial.println(ArraytoString(methods[3],4));
     Serial.print("Approve Method:");Serial.println(ArraytoString(methods[4],4));
     Serial.print("Name:");Serial.println((char*)methods[5]);
+
+    uint8_t buffer[128] = {0};
+    AddERC20_GATT->setValueBuffer(buffer,128);
+
     
   }
   if (Balance_GATT->isWritten())
@@ -332,13 +357,13 @@ void Process_BLE(){
       Serial.println("Value header ERROR");
       return;
     }
-    if (Balance_buffer[23] !=4)
+    if (Balance_buffer[23] !=8)
     {
       Serial.println("Value Length ERROR");
       return;
     }
     uint8_t Value_size = Balance_buffer[23];
-    uint8_t Value[4] = {0};
+    uint8_t Value[8] = {0};
     memcpy(Value,Balance_buffer+24,Value_size);
 
     Serial.println("Update Balance:");
@@ -352,10 +377,62 @@ void Process_BLE(){
     Serial.print("Value: ");    
     for (int i = 0; i < Value_size; ++i)
     {
-      Serial.print(Value[i]);
+      Serial.print(Value[i],HEX);Serial.print("");
     }
     Serial.println();
     NewBalanceFlag = 1;
     LFlash.write("Wallet","Balance",LFLASH_RAW_DATA,(const uint8_t *)&Value,sizeof(Value));
+    uint8_t buffer[128] = {0};
+    Balance_GATT->setValueBuffer(buffer,128);
   }
+}
+
+void regenerate_BLE_parameter(){
+    uint32_t AES_key[4] = {0};
+  for (int i = 0; i < 4; ++i)
+  {
+    AES_key[i] = randomUint32_t_generator();
+  }
+
+  char ServiceUUID[37]= {0};
+  random_UUID_generator(ServiceUUID);
+  char ServiceUUIDHead[9]= {0};
+  memcpy(ServiceUUIDHead,ServiceUUID,8);
+  Serial.print("Service UUID:");Serial.println(ServiceUUID);
+
+  char UUIDHead[6][9] = {0};
+
+
+
+  for (uint8_t i = 0; i < 6; ++i)
+  {
+    random_UUID_generator_head(UUIDHead[i]);
+    Serial.print("UUID Head:");Serial.println(UUIDHead[i]);
+    for (uint8_t j = 0; j < 6; ++j)
+    {
+      if (String(UUIDHead[i]) == String(UUIDHead[j]) && j!=i)
+      {
+         Serial.println(j);
+         Serial.println(i);
+         Serial.println(UUIDHead[j]);
+         i = i-1;
+      }
+      if (String(UUIDHead[i]) == String(ServiceUUIDHead[j]))
+      {
+        Serial.println(i);
+        Serial.println("ServiceUUID");
+        i = i-1;
+      }
+    }
+  }
+
+  LFlash.write("BLE","Service_UUID",LFLASH_RAW_DATA,(const uint8_t *)&ServiceUUID,sizeof(ServiceUUID));
+  LFlash.write("BLE","Transaction",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[0],8);
+  LFlash.write("BLE","Txn",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[1],8);
+  LFlash.write("BLE","AddERC20",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[2],8);
+  LFlash.write("BLE","Balance",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[3],8);
+  LFlash.write("BLE","General_CMD",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[4],8);
+  LFlash.write("BLE","General_Data",LFLASH_RAW_DATA,(const uint8_t *)&UUIDHead[5],8);
+
+  LFlash.write("BLE","BLE_AES_key",LFLASH_RAW_DATA,(const uint8_t *)&AES_key,sizeof(AES_key));
 }

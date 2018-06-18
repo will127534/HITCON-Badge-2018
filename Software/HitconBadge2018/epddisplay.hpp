@@ -14,5 +14,5 @@ void display_static();
 void main_menu();
 void setting_menu();
 void BLE_pairing();
-
+void display_paringQR();
 #endif // _epddisplay_hpp_

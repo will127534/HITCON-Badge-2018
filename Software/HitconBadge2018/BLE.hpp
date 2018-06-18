@@ -17,5 +17,5 @@ extern bool NewBalanceFlag;
 void init_BLE();
 
 void Process_BLE();
-
+void regenerate_BLE_parameter();
 #endif // _BLE_hpp_

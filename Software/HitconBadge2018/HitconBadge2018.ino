@@ -2,9 +2,14 @@
 #include <Adafruit_PN532.h>
 //BLE
 #include "epddisplay.hpp"
+#include <Fonts/Roboto_Medium12pt7b.h>
+#include <Fonts/Roboto_Medium8pt7b.h>
+#include "icon.h"
 #include "BLE.hpp"
 //Read buttons, battery...
 #include "control.hpp"
+
+
 
 //Print and converting String etc...
 #include "util.hpp"
@@ -15,6 +20,7 @@
 //NFC
 #define PN532_IRQ   (2)
 #define PN532_RESET (17)  
+#define LED (A0)  
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 
 void init_hardware(){
@@ -25,6 +31,9 @@ void init_hardware(){
   pinMode(3,OUTPUT);
   digitalWrite(3,HIGH);
   pinMode(A2,INPUT);
+  pinMode(PN532_RESET,OUTPUT);
+  digitalWrite(PN532_RESET,LOW);
+  pinMode(LED,OUTPUT);
   if (LFlash.begin() != LFLASH_OK)
   {
       Serial.println("Flash init failed.");
@@ -42,18 +51,57 @@ void setup(void)
   main_menu();
 }
 
-
-
+bool BT_icon_updated=0;
+bool BT_icon_updated2=0;
+uint32_t start = 0;
 void loop()
 {
+  
   if(readButton()==0xA){
     setting_menu();
     main_menu();
   }
+  if(LBLEPeripheral.connected()>0 && BT_icon_updated == 0){
+    BT_icon_updated = 1;
+    Serial.println("Connected");
+    display.drawBitmap(BT, 0, 2, 20, 20, GxEPD_BLACK);
+    display.updateWindow(0, 2, 20, 20, true);
+    display.powerDown();
+  }
+  if(LBLEPeripheral.connected() == 0 && BT_icon_updated == 1){
+    BT_icon_updated = 0;
+    display.fillRect(0, 2, 20, 20,GxEPD_WHITE);
+    display.updateWindow(0, 2, 20, 20, true);
+    display.powerDown();
+  }
+
   if (NewBalanceFlag)
   {
     NewBalanceFlag = 0;
-    main_menu();
+    //partial update balance
+    display.fillRect(10, 64, 100, 24,GxEPD_WHITE);
+    display.setCursor(10, 80);
+
+    double Balance;
+    uint32_t size = 8;
+    LFlash.read("Wallet","Balance",(uint8_t *)&Balance,&size);
+    Serial.print("Balance:");Serial.println(Balance);
+
+    display.setFont(&Roboto_Medium8pt7b);
+    display.print(Balance,4);
+    display.println(" ETH");
+
+    display.updateWindow(10, 64, 100, 24, true);
+    display.powerDown();
+
   }
   Process_BLE();
+  delay(100);
+  /*
+  if(millis()-start>100){
+    digitalWrite(LED,!digitalRead(LED));
+    Serial.println(millis());
+    start = millis();
+  }
+  */
 }
