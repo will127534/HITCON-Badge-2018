@@ -4,8 +4,9 @@ import bluepy.btle as btle
 import time
 import binascii
 import sys
+import struct
 
-input_str = "Hitcon://pair?v=18&a=808c2257d778e5f1340d9325116f5a7273b33f5d&k=b8377449a773984a52ea6b6196c06f7f&s=ee93aa78-83da-e066-354b-8f9bd3fcc7c6&c=5957e54b2ba34d0f9a21ee2cd27f7788afb10d2bf58b8689"
+input_str = "hitcon://pair?v=18&a=808c2257d778e5f1340d9325116f5a7273b33f5d&k=09626aa096254e8a8ce871bfd7b8895c&s=1cbfbb33-ffc7-c966-77f9-311c6ba9e425&c=26ccce12e2c66a0b72c50cca509dbfc1275074f57e7c5668"
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
@@ -15,9 +16,10 @@ class ScanDelegate(DefaultDelegate):
         if isNewDev:
             pass
             #print ("Discovered device", dev.addr )
+            #print(dev)
         elif isNewData:
             pass
-            #print ("Received new data from", dev.addr)
+            print ("Received new data from", dev.addr)
     def handleNotification(self, cHandle, data):
         # ... perhaps check cHandle
         # ... process 'data'
@@ -29,10 +31,10 @@ scanner = Scanner().withDelegate(ScanDelegate())
 devices = scanner.scan(5.0)
 wallet_address = 0
 for dev in devices:
-    #print ("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi) )
+    print ("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi) )
     for (adtype, desc, value) in dev.getScanData():
-        #print ("  %s = %s" % (desc, value))
-        if "Wallet" in value :
+        print ("  %s = %s" % (desc, value))
+        if dev.rssi >  -65 :
                 print("Get Wallet address:%s!" % dev.addr)
                 wallet_address = dev.addr
 
@@ -78,11 +80,10 @@ Balance_GATT = p.getCharacteristics(uuid=MainCharacteristics['Balance_UUID'])[0]
 print("Writing Balance msg...")
 
 
-addr = bytearray.fromhex(sys.argv[1]) 
-Value = str.encode(sys.argv[2])
-
+addr = bytearray.fromhex(Address) 
+Value = bytearray(struct.pack("d",float(sys.argv[1])))
 print("To:",addr.hex())
-print("Value:",Value," Eth")
+print("Value:",Value.hex()," Eth")
 
 Balance_array = bytes([0x01]) + bytes([len(addr)])+ addr + \
           bytes([0x02]) + bytes([len(Value)])+ Value
