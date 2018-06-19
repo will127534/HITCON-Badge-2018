@@ -29,7 +29,7 @@ void init_display(){
 
   //delay(1000);
   display.fillScreen(GxEPD_WHITE);
-  display.update();
+  //display.update();
   //delay(1000);
 }
 //Battery_voltage ... etc
@@ -167,11 +167,20 @@ void display_paringQR(){
     LFlash.read("BLE","General_CMD",(uint8_t *)&UUIDHead[4],&size);
     LFlash.read("BLE","General_Data",(uint8_t *)&UUIDHead[5],&size);
 
-    uint32_t AES_key[4] = {0};
+    uint8_t AES_key[16] = {0};
     size = sizeof(AES_key);
     LFlash.read("BLE","BLE_AES_key",(uint8_t *)&AES_key,&size);
 
-    sprintf (AES_key_buffer, "hitcon://pair?v=18&a=%s&k=%08x%08x%08x%08x&s=%s&c=%s%s%s%s%s%s",publicAddress_string.c_str(), AES_key[0], AES_key[1], AES_key[2], AES_key[3],ServiceUUID,UUIDHead[0],UUIDHead[1],UUIDHead[2],UUIDHead[3],UUIDHead[4],UUIDHead[5]);
+    char AES_buf[32+1];
+    char *pos = AES_buf;
+
+    for (int i = 0 ; i < 16 ; i++) {
+        pos += sprintf(pos, "%02x", AES_key[i]);
+    }
+    Serial.println(AES_buf);
+
+
+    sprintf (AES_key_buffer, "hitcon://pair?v=18&a=%s&k=%0s&s=%s&c=%s%s%s%s%s%s",publicAddress_string.c_str(), AES_buf,ServiceUUID,UUIDHead[0],UUIDHead[1],UUIDHead[2],UUIDHead[3],UUIDHead[4],UUIDHead[5]);
 
     Serial.print("QR:");Serial.println(AES_key_buffer);
     Serial.println(qrcode_getBufferSize(8));
