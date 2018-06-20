@@ -14,6 +14,10 @@
 #include "util.hpp"
 #include "LFlash.h"
 #include "BLE.hpp"
+
+
+
+
 GxIO_Class io(SPI, 10, 7, 5);
 GxGDE0213B1 display(io,5,4);
 
@@ -50,9 +54,9 @@ void main_menu(){
   display.setFont(&Roboto_Medium12pt7b);
 
   display.fillScreen(GxEPD_WHITE);
-  display.setCursor(10, 50);
+  display.setCursor(30, 50);
   display.println("Balance:");
-  display.setCursor(10, 80);
+  display.setCursor(30, 80);
 
   double Balance;
   uint32_t size = 8;
@@ -65,19 +69,23 @@ void main_menu(){
   }
 
   display.setFont(&Roboto_Medium8pt7b);
-  display.print(Balance,4);
-  display.println(" ETH");
+  display.print(Balance,4);display.print(" ETH");
   
   display.setCursor(0,122-7);
-  display.println("[A]:SET");
+  display.print("[A]:SET ");
  
   QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(3)];
-  qrcode_initText(&qrcode, qrcodeData, 3, 0, publicAddress_string.c_str());
+  uint8_t qrcodeData[qrcode_getBufferSize(4)];
+  String QR_code_string = String("hitcon://tran?a=")+publicAddress_string;
+  Serial.println(QR_code_string);
+  qrcode_initText(&qrcode, qrcodeData, 4, 0, QR_code_string.c_str());
 
-  int x0 = 140;
-  int y0 = 25;
-  int expension = 3;
+  display.setCursor(150,40);
+  display.println("Address: ");
+
+  int x0 = 150;
+  int y0 = 50;
+  int expension = 2;
   for (uint8_t y = 0; y < qrcode.size; y++) {
       for (uint8_t x = 0; x < qrcode.size; x++) {
           if (qrcode_getModule(&qrcode, x, y)) {
@@ -97,28 +105,22 @@ void main_menu(){
 void setting_menu(){
   display.fillScreen(GxEPD_WHITE);
   display.setFont(&Roboto_Medium8pt7b);
-  
-  display.setCursor(50, 40);
-  display.print("NFC: ");display.print("ON");
-  display.println("   [4]:on,[5]:off");
-  display.setCursor(50, 60);
-  display.print("BLE: ");display.print("ON");
-  display.println("   [7]:on,[8]:off");
+
   display.setCursor(50, 75);
-  display.print("[B]:ReGenerateCode");
+  display.print("[1]:ReParing BLE");
   
   display.setFont(&Roboto_Medium8pt7b);
   
   display.setCursor(0,122-7);
-  display.println("[A]:Menu ");
- 
+  display.println("[A]:Menu");
+  
   display_static();
   display.update();
   
   while(1){
       switch(readButton()){
         case 0xA: return;
-        case 0xB:{
+        case 0x1:{
             BLE_pairing();
             return;
         }
@@ -130,24 +132,9 @@ void setting_menu(){
 }
 
 void BLE_pairing(){
-  display.fillScreen(GxEPD_WHITE);
-  display_static();
-  display.setCursor(10, 60);
-
-  display.setCursor(0,122-7);
-  display.setFont(&Roboto_Medium8pt7b);
-  display.println("[A]:Reset");
-  display.update();
-    
   bool changed = 1;
   LFlash.write("BLE","NewSetting",LFLASH_RAW_DATA,(const uint8_t *)&changed,sizeof(changed));
-
-  while(1){
-    if(readButton()==0xA){
-     WDT_Reset();
-    }
-  }
-
+  WDT_Reset();
 }
 
 void display_paringQR(){
@@ -205,10 +192,7 @@ void display_paringQR(){
     display.setCursor(25,9);
     display.setFont(&Roboto_Medium8pt7b);
     display.println("Waiting for connection.....");
-
-    display.setCursor(0,122-7);
-    display.setFont(&Roboto_Medium8pt7b);
-    display.println("[A]:Menu");
+    display_static();
     display.update();
     Serial.println("Waiting for connection");
     while(1){
