@@ -192,7 +192,7 @@ void display_paringQR(){
     display.setCursor(25,9);
     display.setFont(&Roboto_Medium8pt7b);
     display.println("Waiting for connection.....");
-    display_static();
+    //display_static();
     display.update();
     Serial.println("Waiting for connection");
     while(1){
