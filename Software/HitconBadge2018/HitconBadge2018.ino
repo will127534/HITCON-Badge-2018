@@ -114,6 +114,10 @@ void loop()
     display.updateWindow(190, 0, 59, 15, true);
     display.powerDown();
     battery_pattial++;
+
+    uint8_t battery_percentage = (readBatteryVoltage()-2)/130;
+    uint32_t size_battery = 1;
+    Battery_Level_GATT->setValueBuffer(&battery_percentage,size_battery);
   }
   if (BTicon_partial>10 || balance_partial>5 || battery_pattial>5)
   {

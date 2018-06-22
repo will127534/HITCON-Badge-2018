@@ -13,6 +13,11 @@ extern LBLECharacteristicBuffer* AddERC20_GATT;
 extern LBLECharacteristicBuffer* Balance_GATT; 
 extern LBLECharacteristicBuffer* General_CMD_GATT; 
 extern LBLECharacteristicBuffer* General_Data_GATT; 
+
+extern LBLEService* BatteryService;
+extern LBLECharacteristicBuffer* Battery_Level_GATT; 
+
+
 extern bool NewBalanceFlag;
 void init_BLE();
 

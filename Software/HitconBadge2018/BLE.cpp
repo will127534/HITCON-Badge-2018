@@ -14,6 +14,10 @@ LBLECharacteristicBuffer* AddERC20_GATT;
 LBLECharacteristicBuffer* Balance_GATT; 
 LBLECharacteristicBuffer* General_CMD_GATT; 
 LBLECharacteristicBuffer* General_Data_GATT; 
+
+LBLEService* BatteryService;
+LBLECharacteristicBuffer* Battery_Level_GATT; 
+
 bool NewBalanceFlag = 0;
 
 #define BLE_MTU 144
@@ -127,6 +131,18 @@ void init_BLE(){
   
 
   LBLEPeripheral.addService(*ExchangeService);
+
+
+  //0000xxxx-0000-1000-8000-00805F9B34FB 16bit base UUID
+  Battery_Level_GATT = new LBLECharacteristicBuffer("00002A19-0000-1000-8000-00805F9B34FB", LBLE_READ); 
+  BatteryService = new LBLEService("0000180F-0000-1000-8000-00805F9B34FB");
+
+  uint8_t battery_percentage = 100;
+  uint32_t size_battery = 1;
+  Battery_Level_GATT->setValueBuffer(&battery_percentage,size_battery);
+  BatteryService->addAttribute(*Battery_Level_GATT);
+
+  LBLEPeripheral.addService(*BatteryService);
 
   // start the GATT server - it is now 
   // available to connect
