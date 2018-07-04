@@ -88,11 +88,11 @@ void init_BLE(){
   Serial.println();
 
   Transaction_GATT = new LBLECharacteristicBuffer(Transaction_UUID, LBLE_WRITE); 
-  Txn_GATT = new LBLECharacteristicBuffer(Txn_UUID, LBLE_WRITE); 
+  Txn_GATT = new LBLECharacteristicBuffer(Txn_UUID, LBLE_READ); 
   AddERC20_GATT = new LBLECharacteristicBuffer(AddERC20_UUID, LBLE_WRITE); 
   Balance_GATT = new LBLECharacteristicBuffer(Balance_UUID, LBLE_WRITE); 
-  General_CMD_GATT = new LBLECharacteristicBuffer(General_CMD_UUID, LBLE_WRITE); 
-  General_Data_GATT = new LBLECharacteristicBuffer(General_Data_UUID, LBLE_WRITE); 
+  General_CMD_GATT = new LBLECharacteristicBuffer(General_CMD_UUID, LBLE_WRITE|LBLE_READ); 
+  General_Data_GATT = new LBLECharacteristicBuffer(General_Data_UUID, LBLE_WRITE|LBLE_READ); 
 
   ExchangeService = new LBLEService(ServiceUUID);
   //LBLEService ExchangeService("48495443-4f4e-4241-4447-453230313810");

@@ -121,6 +121,7 @@ void setting_menu(){
       switch(readButton()){
         case 0xA: return;
         case 0x1:{
+          Serial.println("Paring!");
             BLE_pairing();
             return;
         }

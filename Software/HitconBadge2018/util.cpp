@@ -25,7 +25,7 @@ String ArraytoString(uint8_t* buffer,uint32_t len){
   String data;
   for (int i = 0; i < len; ++i)
   {
-    if (buffer[i]<0x0F)
+    if (buffer[i]<=0x0F)
     {
       data += "0";
     }
