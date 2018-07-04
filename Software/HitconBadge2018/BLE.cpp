@@ -327,11 +327,12 @@ void Process_BLE(){
     Serial.print("Txn Length:");Serial.println(Txn_len);
     Txn_GATT->setValueBuffer(Txn_buffer,Txn_len);
     LBLEPeripheral.notifyAll(*Txn_GATT);
-
+/*
     delay(1000);
     uint8_t buffer[BLE_MTU] = {0};
     Transaction_GATT->setValueBuffer(buffer,BLE_MTU);
     Txn_GATT->setValueBuffer(buffer,BLE_MTU);
+    */
     
   }
   if (AddERC20_GATT->isWritten())
