@@ -8,11 +8,11 @@ bitmap_code = open('icon.c','w')
 
 for filename in os.listdir("."):
 	if ".bmp" in filename:
-		print filename
+		print(filename)
 		im = Image.open(filename)
 		bitmap_code.write('const uint8_t %s []  = {'%filename.strip(".bmp"))
 		width, height = im.size
-		bitmap_code.write('// %d x %d \n'%(width,height))
+		bitmap_code.write('// %d x %d \n\t'%(width,height))
 		im = im.convert('L')
 		im = ImageOps.invert(im)
 		im = im.convert('1')
@@ -22,7 +22,7 @@ for filename in os.listdir("."):
 			for y in  row_int:
 				bitmap_code.write(str(y)+',')
 				pass
-			bitmap_code.write("\n")
+			bitmap_code.write("//%d\n\t"%len(row_int))
 			pass
 		bitmap_code.seek(bitmap_code.tell()-1)
 		bitmap_code.write("};\n")

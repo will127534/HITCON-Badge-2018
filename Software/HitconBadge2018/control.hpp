@@ -1,12 +1,16 @@
 #ifndef _control_hpp_
 #define _control_hpp_
-
+#include "Arduino.h"
 
 #define R1 2
 #define R2 4.7
 #define R3 1
 #define V_full 3.3
+#define LED A0
+#define VBAT_PIN A2
+#define ABUTTON_PIN A1
 
+byte readBatteryPercentage();
 /// Check if Battery Voltage
 ///
 /// \returns Battery Voltage (float)

@@ -35,7 +35,7 @@
 
 
 // Partial Update Delay, may have an influence on degradation
-#define GxGDE0213B1_PU_DELAY 500
+#define GxGDE0213B1_PU_DELAY 0
 
 const uint8_t GxGDE0213B1::LUTDefault_full[] =
 {
@@ -63,7 +63,26 @@ GxGDE0213B1::GxGDE0213B1(GxIO& io, int8_t rst, int8_t busy) :
   _rst(rst), _busy(busy)
 {
 }
-
+uint16_t GxGDE0213B1::Gxmin(uint16_t a, uint16_t b)
+{
+  if (a<b)
+  {
+    return a;
+  }
+  else{
+    return b;
+  }
+}
+uint16_t GxGDE0213B1::Gxmax(uint16_t a, uint16_t b)
+{
+  if (a>b)
+  {
+    return a;
+  }
+  else{
+    return b;
+  }
+}
 void GxGDE0213B1::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
   if ((x < 0) || (x >= width()) || (y < 0) || (y >= height())) return;
@@ -107,7 +126,7 @@ void GxGDE0213B1::drawPixel(int16_t x, int16_t y, uint16_t color)
 void GxGDE0213B1::init(void)
 {
   IO.init();
-  IO.setFrequency(4000000); // 4MHz : 250ns > 150ns min RD cycle
+  IO.setFrequency(4000000); // 4MHz : 250ns > 150ns Gxmin RD cycle
   if (_rst >= 0)
   {
     digitalWrite(_rst, HIGH);
@@ -271,8 +290,8 @@ void GxGDE0213B1::updateWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, b
   if (using_rotation) _rotate(x, y, w, h);
   if (x >= GxGDE0213B1_WIDTH) return;
   if (y >= GxGDE0213B1_HEIGHT) return;
-  uint16_t xe = min(GxGDE0213B1_WIDTH, x + w) - 1;
-  uint16_t ye = min(GxGDE0213B1_HEIGHT, y + h) - 1;
+  uint16_t xe = Gxmin(GxGDE0213B1_WIDTH, x + w) - 1;
+  uint16_t ye = Gxmin(GxGDE0213B1_HEIGHT, y + h) - 1;
   uint16_t xs_d8 = x / 8;
   uint16_t xe_d8 = xe / 8;
   uint16_t ys_bx = GxGDE0213B1_HEIGHT - ye - 1;
@@ -307,7 +326,10 @@ void GxGDE0213B1::updateWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, b
       _writeData(~data);
     }
   }
+  //_Update_Part();
   delay(GxGDE0213B1_PU_DELAY);
+
+
 }
 
 void GxGDE0213B1::_writeToWindow(uint16_t xs, uint16_t ys, uint16_t xd, uint16_t yd, uint16_t w, uint16_t h)
@@ -320,10 +342,10 @@ void GxGDE0213B1::_writeToWindow(uint16_t xs, uint16_t ys, uint16_t xd, uint16_t
   if (yd >= GxGDE0213B1_HEIGHT) return;
   // flip y for y-decrement mode
   ys = GxGDE0213B1_HEIGHT - ys - h;
-  w = min(w, GxGDE0213B1_WIDTH - xs);
-  w = min(w, GxGDE0213B1_WIDTH - xd);
-  h = min(h, GxGDE0213B1_HEIGHT - ys);
-  h = min(h, GxGDE0213B1_HEIGHT - yd);
+  w = Gxmin(w, GxGDE0213B1_WIDTH - xs);
+  w = Gxmin(w, GxGDE0213B1_WIDTH - xd);
+  h = Gxmin(h, GxGDE0213B1_HEIGHT - ys);
+  h = Gxmin(h, GxGDE0213B1_HEIGHT - yd);
   uint16_t xds_d8 = xd / 8;
   uint16_t xde_d8 = (xd + w - 1) / 8;
   uint16_t yde = yd + h - 1;
@@ -422,12 +444,12 @@ void GxGDE0213B1::_writeCommandData(const uint8_t* pCommandData, uint8_t datalen
 
 void GxGDE0213B1::_waitWhileBusy(const char* comment)
 {
-  unsigned long start = micros();
+  unsigned long start = millis();
   while (1)
   {
     if (!digitalRead(_busy)) break;
-    delay(1);
-    if (micros() - start > 10000000)
+    delay(10);
+    if (millis() - start > 10000)
     {
       Serial.println("Busy Timeout!");
       break;
@@ -436,7 +458,7 @@ void GxGDE0213B1::_waitWhileBusy(const char* comment)
   if (comment)
   {
 #if !defined(DISABLE_DIAGNOSTIC_OUTPUT)
-    unsigned long elapsed = micros() - start;
+    unsigned long elapsed = millis() - start;
     Serial.print(comment);
     Serial.print(" : ");
     Serial.println(elapsed);
@@ -449,7 +471,7 @@ void GxGDE0213B1::_setRamDataEntryMode(uint8_t em)
 {
   const uint16_t xPixelsPar = GxGDE0213B1_X_PIXELS - 1;
   const uint16_t yPixelsPar = GxGDE0213B1_Y_PIXELS - 1;
-  em = min(em, 0x03);
+  em = Gxmin(em, 0x03);
   _writeCommand(0x11);
   _writeData(em);
   switch (em)
@@ -689,8 +711,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(void), uint16_t x, uint
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -707,8 +729,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(void), uint16_t x, uint
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -737,8 +759,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(uint32_t), uint16_t x, 
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -755,8 +777,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(uint32_t), uint16_t x, 
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -785,8 +807,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(const void*), uint16_t 
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -803,8 +825,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(const void*), uint16_t 
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -833,8 +855,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(const void*, const void
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);
@@ -851,8 +873,8 @@ void GxGDE0213B1::drawPagedToWindow(void (*drawCallback)(const void*, const void
     // flip y for y-decrement mode
     uint16_t yds = (GxGDE0213B1_PAGES - _current_page - 1) * GxGDE0213B1_PAGE_HEIGHT;
     uint16_t yde = yds + GxGDE0213B1_PAGE_HEIGHT;
-    yds = max(y, yds);
-    yde = min(y + h, yde);
+    yds = Gxmax(y, yds);
+    yde = Gxmin(y + h, yde);
     if (yde > yds)
     {
       fillScreen(GxEPD_WHITE);

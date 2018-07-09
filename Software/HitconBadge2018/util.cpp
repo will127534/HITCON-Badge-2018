@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "hal_trng.h"
 #include "hal_wdt.h"
-
+#include "uint256.hpp"
 
 String ArraytoString(uint8_t* buffer,uint32_t len,uint32_t String_len){
   if (String_len<len)
@@ -108,3 +108,84 @@ void WDT_Reset(){
 
   }
 }
+
+
+String vector2string_DEC(std::vector<uint8_t> data,uint8_t quanty){
+
+  uint256_t value;
+  convertUint256BE(&data[0],data.size(), &value);
+  char value_str[100] = {0};
+  tostring256(&value, 10, value_str,100);
+  String value_string = String(value_str);
+  //Serial.println(value_string);
+  //Serial.println(value_string.length());
+  //Serial.println(quanty);
+
+
+  switch(quanty){
+    case 0: //raw output
+      return value_string;
+      break;
+    case 1:{
+      // Gwei = 10^9 = 10 char
+      if (value_string.length()>9)
+      {
+        value_string = value_string.substring(0,value_string.length()-9) + "." + value_string.substring(value_string.length()-9);
+      }
+      else{
+        String append_0;
+        for (int i = 0; i < 10 - value_string.length(); ++i)
+        {
+          append_0 += "0";
+        }
+        value_string = "0." + append_0 + value_string;
+      }
+      break;
+    }
+    case 2:{
+      // eth = 10^18 = 19 char 
+      if (value_string.length()>18)
+      {
+        value_string = value_string.substring(0,value_string.length()-18) + "." + value_string.substring(value_string.length()-18);
+      }
+      else{
+        String append_0;
+        for (int i = 0; i < 18 - value_string.length(); ++i)
+        {
+          append_0 += "0";
+        }
+        value_string =  "0." +append_0+ value_string;
+      }
+      break;
+    }
+
+  }
+  //strip 0
+  for (int i = value_string.length()-1; i>0; i--)
+  {
+    if (value_string.charAt(i) == '0')
+    {
+      value_string.remove(i);
+    }
+    else
+    {
+      break;
+    }
+  }
+  //strip . if only . is at the end of string
+  if (value_string.charAt(value_string.length()-1) == '.')
+  {
+    value_string.remove(value_string.length()-1);
+  }
+
+  return value_string;
+}
+
+
+void convertUint256BE(uint8_t *data, uint32_t length, uint256_t *target) {
+    uint8_t tmp[32];
+    memset(tmp, 0, 32);
+    memmove(tmp + 32 - length, data, length);
+    readu256BE(tmp, target);
+}
+

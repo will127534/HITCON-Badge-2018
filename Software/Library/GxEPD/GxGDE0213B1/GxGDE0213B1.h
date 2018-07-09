@@ -71,6 +71,8 @@ class GxGDE0213B1 : public GxEPD
 #else
     GxGDE0213B1(GxIO& io, int8_t rst = 9, int8_t busy = 7);
 #endif
+    uint16_t Gxmin(uint16_t a, uint16_t b);
+    uint16_t Gxmax(uint16_t a, uint16_t b);
     void drawPixel(int16_t x, int16_t y, uint16_t color);
     void init(void);
     void fillScreen(uint16_t color); // 0x0 black, >0x0 white, to buffer

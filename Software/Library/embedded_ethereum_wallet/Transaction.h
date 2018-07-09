@@ -9,27 +9,12 @@ using namespace std;
 class Transaction {
 
 public:
-    typedef struct {
-        char from[80];
-        char to[80];
-        char gasPrice[20];
-        long gas;
-    } Options;
-
-    Options options;
-
-public:
     Transaction();
 
     void setPrivateKey(const uint8_t *key);
 
-    vector<uint8_t> getRaw(uint8_t* nonceVal,
-                  uint8_t* gasPriceVal,
-                  uint8_t*  gasLimitVal,
-                  uint8_t *toStr,
-                  uint8_t *valueStr,
-                  uint8_t *dataStr,
-                  uint32_t chainId);
+vector<uint8_t> getRaw(vector<uint8_t> nonce, vector<uint8_t> gasPrice, vector<uint8_t>  gasLimit,
+                                    vector<uint8_t> to, vector<uint8_t> value, vector<uint8_t> data, uint32_t chainId);
 
 private:
     const uint8_t * privateKey;
@@ -44,31 +29,13 @@ private:
     String String_format(const char* format, ...);*/
     void Sign(uint8_t* hash, uint8_t* sig, int* recid);
 
-    void GenerateSignature(uint8_t* signature,
-                           int* recoveryId,
-                           uint8_t* nonceVal,
-                           uint8_t* gasPriceVal,
-                           uint8_t*  gasLimitVal,
-                           uint8_t* toStr,
-                           uint8_t* valueStr,
-                           uint8_t* dataStr,
-                           uint32_t chainId);
+void GenerateSignature(uint8_t* signature,int* recoveryId,
+                       vector<uint8_t> nonce, vector<uint8_t> gasPrice, vector<uint8_t>  gasLimit,
+                       vector<uint8_t> to, vector<uint8_t> value, vector<uint8_t> data, uint32_t chainId);
 
-    vector<uint8_t> RlpEncode(uint8_t* nonceVal,
-                              uint8_t* gasPriceVal,
-                              uint8_t*  gasLimitVal,
-                              uint8_t* toStr,
-                              uint8_t* valueStr,
-                              uint8_t* dataStr,
-                              uint32_t chainId);
+vector<uint8_t> RlpEncode(vector<uint8_t> nonce, vector<uint8_t> gasPrice, vector<uint8_t>  gasLimit,
+                          vector<uint8_t> to, vector<uint8_t> value, vector<uint8_t> data, uint32_t chainIdStr) ;
 
-    vector<uint8_t> RlpEncodeForRawTransaction(uint8_t* nonceVal,
-                                               uint8_t* gasPriceVal,
-                                               uint8_t*  gasLimitVal,
-                                               uint8_t* toStr,
-                                               uint8_t* valueStr,
-                                               uint8_t* dataStr,
-                                               uint32_t chainId,
-                                               uint8_t* sig,
-                                               uint8_t recoveryId);
+vector<uint8_t> RlpEncodeForRawTransaction( vector<uint8_t> nonce, vector<uint8_t> gasPrice, vector<uint8_t>  gasLimit,
+                             vector<uint8_t> to, vector<uint8_t> value, vector<uint8_t> data, uint32_t chainIdStr, uint8_t* sig, uint8_t recoveryId);
 };

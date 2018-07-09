@@ -3,9 +3,9 @@
 #include "util.hpp"
 #include "wallet.hpp"
 #include "LFlash.h"
-#include <LWiFi.h>
-#include "hal_aes.h"
 
+#include "hal_aes.h"
+#include "control.hpp"
 LBLEService* ExchangeService;
 
 LBLECharacteristicBuffer* Transaction_GATT; 
@@ -24,12 +24,10 @@ bool NewBalanceFlag = 0;
 
 void init_BLE(){
   // Initialize BLE subsystem
-  LBLE.begin();
+  //
   while (!LBLE.ready()) {
-    delay(100);
+    delay(20);
   }
-  //delay(5000);
-  WiFi.end();
 
 
   bool changed = 0;
@@ -107,7 +105,7 @@ void init_BLE(){
   // In this case, we simply create an advertisement that represents an
   // connectable device with a device name
   LBLEAdvertisementData advertisement;
-  advertisement.configAsConnectableDevice("",ServiceUUID);
+
 
   // Configure our device's Generic Access Profile's device name
   // Ususally this is the same as the name in the advertisement data.
@@ -137,19 +135,24 @@ void init_BLE(){
   Battery_Level_GATT = new LBLECharacteristicBuffer("00002A19-0000-1000-8000-00805F9B34FB", LBLE_READ); 
   BatteryService = new LBLEService("0000180F-0000-1000-8000-00805F9B34FB");
 
-  uint8_t battery_percentage = 100;
+  uint8_t battery_percentage = readBatteryPercentage();
   uint32_t size_battery = 1;
   Battery_Level_GATT->setValueBuffer(&battery_percentage,size_battery);
   BatteryService->addAttribute(*Battery_Level_GATT);
 
   LBLEPeripheral.addService(*BatteryService);
 
+
+  advertisement.configAsConnectableDevice("",ServiceUUID);
+  advertisement.configAsConnectableDevice("","0000180F-0000-1000-8000-00805F9B34FB");
   // start the GATT server - it is now 
   // available to connect
+
+    // start advertisment
+  LBLEPeripheral.advertise(advertisement);
   LBLEPeripheral.begin();
 
-  // start advertisment
-  LBLEPeripheral.advertise(advertisement);
+
 
 
   if (changed)
@@ -235,20 +238,22 @@ int parsing(uint8_t* data,uint8_t header, uint8_t buffersize, uint8_t expected_l
     return data_size;
 }
 
-void Process_BLE(){
+bool Process_BLE(){
 
   if (Transaction_GATT->isWritten())
   {
     Serial.println("New Transaction Get!");
     uint8_t Transaction_Buffer[BLE_MTU] = {0};
     Transaction_GATT->getValue(Transaction_Buffer,BLE_MTU,0);
-
+    uint8_t buffer[BLE_MTU] = {0};
+    Transaction_GATT->setValueBuffer(buffer,BLE_MTU);
     for (int i = 0; i < 144; ++i)
     {
       Serial.print(Transaction_Buffer[i],HEX);
     }
     Serial.println();
 
+    transaction_struct trx_test;
 
     uint8_t decrypted_buffer[BLE_MTU-HAL_AES_CBC_IV_LENGTH] = {0};
     decript(Transaction_Buffer,decrypted_buffer,BLE_MTU-HAL_AES_CBC_IV_LENGTH);
@@ -260,10 +265,9 @@ void Process_BLE(){
     if (len == -1)
     {
       Serial.println("Address Parse Error");
-      return;
+      return 0;
     }
-    String To = ArraytoString(TO_Address,20);
-    Serial.print("To Address:");Serial.println(To);
+    trx_test.to.assign(TO_Address, TO_Address + 20);
 
     header_counter += len + 2;
 
@@ -272,10 +276,10 @@ void Process_BLE(){
     if (len == -1)
     {
       Serial.println("Value Parse Error");
-      return;
+      return 0;
     }
-    String Value_str = ArraytoString(Value,len);
-    Serial.print("Value:");Serial.println(Value_str);
+    trx_test.value.assign(Value, Value + len);
+
 
     header_counter += len + 2;
 
@@ -284,10 +288,10 @@ void Process_BLE(){
     if (len == -1)
     {
       Serial.println("GasPrice Parse Error");
-      return;
+      return 0;
     }
-    String GasPrice_str = ArraytoString(GasPrice,len);
-    Serial.print("GasPrice:");Serial.println(GasPrice_str);
+    trx_test.gasPrice.assign(GasPrice, GasPrice + len);
+
     header_counter += len + 2;
     
     uint8_t GasLimit[32] = {0};
@@ -295,21 +299,21 @@ void Process_BLE(){
     if (len == -1)
     {
       Serial.println("GasLimit Parse Error");
-      return;
+      return 0;
     }
-    String GasLimit_str = ArraytoString(GasLimit,len);
-    Serial.print("GasLimit:");Serial.println(GasLimit_str);
+    trx_test.gasLimit.assign(GasLimit, GasLimit + len);
+
+
     header_counter += len + 2;
 
-    uint8_t Noice[32] = {0};
-    len = parsing(decrypted_buffer+header_counter,0x05,32,0,Noice,header_counter);
+    uint8_t Nonce[32] = {0};
+    len = parsing(decrypted_buffer+header_counter,0x05,32,0,Nonce,header_counter);
     if (len == -1)
     {
-      Serial.println("Noice Parse Error");
-      return;
+      Serial.println("Nonce Parse Error");
+      return 0;
     }
-    String Noice_str = ArraytoString(Noice,len);
-    Serial.print("Noice:");Serial.println(Noice_str);
+    trx_test.nonce.assign(Nonce, Nonce + len);
     header_counter += len + 2;
 
     uint8_t Data[100] = {0};
@@ -317,22 +321,31 @@ void Process_BLE(){
     if (len == -1)
     {
       Serial.println("Data Parse Error");
-      return;
+      return 0;
     }
-    String Data_str = ArraytoString(Data,len);
-    Serial.print("Data:");Serial.println(Data_str);
+    trx_test.data.assign(Data, Data + len);
+
+    uint8_t pinCode[6] = {0};
+    bool ret = transaction_page(trx_test);
+    if (ret)
+    {
+      Serial.println("Pincode");
+      pincode_page(pinCode);
+    }
+    else{
+      uint8_t Txn_buffer[10] = {0};
+      Txn_buffer[0] = 0xF1; //F1 = transaction cancel by user
+      Txn_GATT->setValueBuffer(Txn_buffer,10);
+      LBLEPeripheral.notifyAll(*Txn_GATT);
+      return 1;
+    }
 
     uint8_t Txn_buffer[256] = {0};
-    uint8_t Txn_len = start_transaction(Txn_buffer,publicAddress_string,To,Value_str,Data_str,GasPrice_str,GasLimit_str,Noice_str);
+    uint8_t Txn_len = start_transaction(Txn_buffer,trx_test);
     Serial.print("Txn Length:");Serial.println(Txn_len);
     Txn_GATT->setValueBuffer(Txn_buffer,Txn_len);
     LBLEPeripheral.notifyAll(*Txn_GATT);
-/*
-    delay(1000);
-    uint8_t buffer[BLE_MTU] = {0};
-    Transaction_GATT->setValueBuffer(buffer,BLE_MTU);
-    Txn_GATT->setValueBuffer(buffer,BLE_MTU);
-    */
+    return 1;
     
   }
   if (AddERC20_GATT->isWritten())
@@ -340,6 +353,9 @@ void Process_BLE(){
     Serial.println("New AddERC20 Get!");
     uint8_t AddERC20_buffer[BLE_MTU] = {0};
     AddERC20_GATT->getValue(AddERC20_buffer,BLE_MTU,0);
+    uint8_t buffer[BLE_MTU] = {0};
+    AddERC20_GATT->setValueBuffer(buffer,BLE_MTU);
+
     Serial.println((char*)AddERC20_buffer);
     for (int i = 0; i < 100; ++i)
     {
@@ -352,12 +368,12 @@ void Process_BLE(){
     if (AddERC20_buffer[0] != 0x10)
     {
       Serial.println("ERC20 Contract Address header ERROR");
-      return;
+      return 0;
     }
     if (AddERC20_buffer[1] != 0x14)
     {
       Serial.println("ERC20 Contract Address Length ERROR");
-      return;
+      return 0;
     }
 
     uint8_t ERC20_Address[20] = {0};
@@ -370,12 +386,12 @@ void Process_BLE(){
       if (AddERC20_buffer[22+i*6] != (0x11+i))
       {
         Serial.println("ERC20 Contract method header ERROR");
-        return;
+        return 0;
       }
       if (AddERC20_buffer[22+i*6+1] != 0x4)
       {
         Serial.println("ERC20 Contract method Length ERROR");
-        return;
+        return 0;
       }
       memcpy(methods[i],AddERC20_buffer+22+i*6+2,4);
     }
@@ -388,16 +404,26 @@ void Process_BLE(){
     Serial.print("Approve Method:");Serial.println(ArraytoString(methods[4],4));
     Serial.print("Name:");Serial.println((char*)methods[5]);
 
-    uint8_t buffer[BLE_MTU] = {0};
-    AddERC20_GATT->setValueBuffer(buffer,BLE_MTU);
+    erc20_struct new_erc20;
+    memcpy(new_erc20.Contract_Address,ERC20_Address,20);
+    memcpy(new_erc20.TotalSupply,methods[0],4);
+    memcpy(new_erc20.BalanceOf,methods[1],4);
+    memcpy(new_erc20.Transfer,methods[2],4);
+    memcpy(new_erc20.TransferFrom,methods[3],4);
+    memcpy(new_erc20.Approve,methods[4],4);
+    memcpy(new_erc20.Name,methods[5],4);
 
-    
+    LFlash.write("ERC20",(char*)methods[5],LFLASH_RAW_DATA,(const uint8_t *)&new_erc20,sizeof(new_erc20));
+
+    return 0;
   }
   if (Balance_GATT->isWritten())
   {
     Serial.println("New Balance Get!");
     uint8_t Balance_buffer[BLE_MTU] = {0};
     Balance_GATT->getValue(Balance_buffer,BLE_MTU,0);
+    uint8_t buffer[BLE_MTU] = {0};
+    Balance_GATT->setValueBuffer(buffer,BLE_MTU);
     for (int i = 0; i < BLE_MTU; ++i)
     {
       Serial.print(Balance_buffer[i],HEX);
@@ -413,24 +439,24 @@ void Process_BLE(){
     if (decrypted_buffer[0] != 0x01)
     {
       Serial.println("Address header ERROR");
-      return;
+      return 0;
     }
     if (decrypted_buffer[1] != 0x14)
     {
       Serial.println("Address Length ERROR");
-      return;
+      return 0;
     }
     uint8_t Address[20] = {0};
     memcpy(Address,decrypted_buffer+2,20);
     if (decrypted_buffer[22] != 0x02)
     {
       Serial.println("Value header ERROR");
-      return;
+      return 0;
     }
     if (decrypted_buffer[23] !=8)
     {
       Serial.println("Value Length ERROR");
-      return;
+      return 0;
     }
     uint8_t Value_size = decrypted_buffer[23];
     uint8_t Value[8] = {0};
@@ -452,9 +478,9 @@ void Process_BLE(){
     Serial.println();
     NewBalanceFlag = 1;
     LFlash.write("Wallet","Balance",LFLASH_RAW_DATA,(const uint8_t *)&Value,sizeof(Value));
-    uint8_t buffer[BLE_MTU] = {0};
-    Balance_GATT->setValueBuffer(buffer,BLE_MTU);
+    return 0;
   }
+
 }
 
 void regenerate_BLE_parameter(){
