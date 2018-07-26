@@ -32,6 +32,56 @@
                             "version": "1.4.4"
                         }
                     ]
+                },
+                {
+                    "name": "Hitcon Badge 2018",
+                    "architecture": "linkit_rtos",
+                    "version": "1.0.1",
+                    "category": "Contributed",
+                    "url": "https://raw.githubusercontent.com/will127534/HITCON-Badge-2018/master/Software/Arduino_packages/Badge_Linkit7697_V1.01.tar.bz2",
+                    "archiveFileName": "Badge_Linkit7697_V1.01.tar.bz2",
+                    "boards": [
+                        {
+                            "name": "Hitcon Badge 2018"
+                        }
+                    ],
+                    "toolsDependencies": [
+                        {
+                            "packager": "arduino",
+                            "name": "arm-none-eabi-gcc",
+                            "version": "4.8.3-2014q1"
+                        },
+                        {
+                            "packager": "LinkIt",
+                            "name": "flash_tool",
+                            "version": "1.4.4"
+                        }
+                    ]
+                },
+                {
+                    "name": "Hitcon Badge 2018",
+                    "architecture": "linkit_rtos",
+                    "version": "1.0.2",
+                    "category": "Contributed",
+                    "url": "https://raw.githubusercontent.com/will127534/HITCON-Badge-2018/master/Software/Arduino_packages/Badge_Linkit7697_V1.02.tar.bz2",
+                    "archiveFileName": "Badge_Linkit7697_V1.02.tar.bz2",
+                    "boards": [
+                        {
+                            "name": "Hitcon Badge 2018"
+                        }
+                    ],
+                    "toolsDependencies": [
+                        {
+                            "packager": "arduino",
+                            "name": "arm-none-eabi-gcc",
+                            "version": "4.8.3-2014q1"
+                        },
+                        {
+                            "packager": "LinkIt",
+                            "name": "flash_tool",
+                            "version": "1.4.4"
+                        }
+                    ]
                 }
             ],
             "tools": [

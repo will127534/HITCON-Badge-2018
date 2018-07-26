@@ -30,7 +30,7 @@
 
 #include "GxGDE0213B1.h"
 
-//#define DISABLE_DIAGNOSTIC_OUTPUT
+#define DISABLE_DIAGNOSTIC_OUTPUT
 
 
 

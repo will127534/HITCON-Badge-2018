@@ -3,6 +3,48 @@
 #include "hal_trng.h"
 #include "hal_wdt.h"
 #include "uint256.hpp"
+#include "hal_sha.h"
+
+
+void sha256_data( uint8_t *message, uint8_t len, uint8_t *digest)
+{
+  hal_sha256_context_t context = {0};
+  hal_sha256_init(&context);
+  hal_sha256_append(&context, message, len);
+  hal_sha256_end(&context, digest);
+}
+
+uint16_t BinaryStringtoArray(String data){
+  uint16_t output = 0;
+  if (data.length()>16)
+  {
+    Serial.println("BinaryStringtoArray length too large");
+    return 0;
+  }
+  for (int i = 0; i < data.length(); ++i)
+  {
+    if (data[i] == '1')
+    {
+      output |= (uint16_t)1<<(data.length()-i-1);
+    }
+  }
+  return output;
+}
+String ArraytoString_binary(uint8_t* buffer,uint32_t len){
+  String data;
+  for (int i = 0; i < len; ++i)
+  {
+    String binary_string = String(buffer[i],BIN);
+    uint8_t append0 = 8 - binary_string.length();
+    for (int i = 0; i < append0; ++i)
+    {
+      data += "0";
+    }
+    data += binary_string;
+  }
+  return data;
+}
+
 
 String ArraytoString(uint8_t* buffer,uint32_t len,uint32_t String_len){
   if (String_len<len)

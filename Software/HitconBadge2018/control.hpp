@@ -10,11 +10,19 @@
 #define VBAT_PIN A2
 #define ABUTTON_PIN A1
 
+#define V_full 3.3
+
+
+/// Check if Battery Percentage
+///	Just using simple mapping method
+/// \returns Battery Percentage 0-100 byte
 byte readBatteryPercentage();
+
 /// Check if Battery Voltage
 ///
 /// \returns Battery Voltage (float)
 float readBatteryVoltage();
+
 /// Check if any button is pressed
 ///
 /// \returns key code such as A,B,C,or 0-9 ,D for DEL and E for Enter
