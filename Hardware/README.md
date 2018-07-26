@@ -56,12 +56,11 @@ Adafruit GFX提供了幾個畫圖的操作API，不過要注意的是只有黑�
 由於MT7697 IO不夠用了，所以矩陣鍵盤使用的是類比的方式，
 藉由按鈕按下後所產生的不同組合的電阻產生的電壓去判定是哪一個按鈕被按下。
 由於MT7697內建的ADC有4096階，使用上問題不大。
-按鈕 A,B,C,0-9,DEL,ENTER都在Array裡面。  
+按鈕 A,B,C,0-9,DEL,ENTER都在Array裡面。 
+
 | Button Array | MT7697 pin | Arduino |
 | -------- | -------- | -------- |
-| Analog Voltage     | GPIO58     | A1    |
-
-
+| Analog Voltage     | GPIO58     | A1     |
 ### Special Buttons:  
 由於MT7697設計上需要一個Bootstarp pin去切換Bootloader or User code，
 所以GPIO37的Button在剛開機時作為強制切進Bootloader的方法，開機後就是一個普通的按鈕
