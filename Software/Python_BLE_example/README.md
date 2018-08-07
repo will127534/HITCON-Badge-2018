@@ -1,8 +1,9 @@
-## Python BLE interface 測試程式
+## Python BLE  測試程式
 
-總之這隻程式是為了測試BLE用的
-使用方式如下:
+總之這幾個程式是為了測試BLE用的，開發的時候用的是Raspberry Pi 3，   
+不過Linux應該都可以跑。
 
+### Usage
 首先把第8行的input_str替換成QR Code output的網址
 接來就可以執行了
 ``` python
