@@ -1,5 +1,9 @@
 //NFC
-#include <Adafruit_PN532.h>
+#include "PN532_I2C.h"
+#include "emulatetag.h"
+#include "NdefMessage.h"
+
+
 //BLE
 #include "epddisplay.hpp"
 #include <Fonts/Roboto_Medium12pt7b.h>
@@ -23,8 +27,9 @@
 #define PN532_RESET (17)  
 
 #include <LWiFi.h>
-Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 
+PN532_I2C pn532i2c(Wire);
+EmulateTag nfc(pn532i2c);
 
 void init_hardware(){
   Serial.begin(115200);

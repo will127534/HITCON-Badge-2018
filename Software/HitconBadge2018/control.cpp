@@ -126,11 +126,11 @@ int readButton(){
         }
         DEBUG_PRINTLN("");
         // auto cal: when user push ENTER, it will auto cal 3.3V
-        if (buttonArray[j][i] == 0x06 && float(abs(V_matrix-(int)voltage))/float(V_matrix)*100.0 < 1 )
+        if (buttonArray[j][i] == 0x06 && float(abs(V_matrix-(int)voltage))/float(V_matrix)*100.0 < 1.5 )
         {
           V_in = voltage/resistor_array*2.5/4095;
         }
-        if (buttonArray[j][i] == 0x0E && float(abs(V_matrix-(int)voltage))/float(V_matrix)*100.0 < 1 )
+        if (buttonArray[j][i] == 0x0E && float(abs(V_matrix-(int)voltage))/float(V_matrix)*100.0 < 1.5 )
         {
           V_in = voltage/resistor_array*2.5/4095; 
         }

@@ -670,7 +670,7 @@ bool transaction_page(transaction_struct *trx_test){
 
   display.setFont(&Roboto_Medium8pt7b);
   display.setCursor(10, 20);
-  display.println("New Tranaction!");
+  display.println("New Transaction!");
 
   display.setFont();
   display.setCursor(10, 30);
