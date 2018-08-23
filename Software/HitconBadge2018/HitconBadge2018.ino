@@ -69,6 +69,7 @@ void setup(void)
       cmdPoll();
     }
   }
+
   init_display();
   Serial.println("[Setup] Display setup done");
   //Bootstarping 
@@ -76,6 +77,13 @@ void setup(void)
   {
     display.fillScreen(GxEPD_WHITE);
     display.drawBitmap(HITCON, 30, 0, 193, 121, GxEPD_BLACK);
+    display.update();
+    while(1);
+  }
+  if (readButton()==0x0c) // Might Page
+  {
+    display.fillScreen(GxEPD_WHITE);
+    display.drawBitmap(Might, 51, 0, 148, 121, GxEPD_BLACK);
     display.update();
     while(1);
   }

@@ -33,7 +33,7 @@ void setup(void) {
   Serial.println(mac[0], HEX);
 
   uint8_t host_cred[32] = {0};
-  memcpy(hardware_wallet.host_cred,mac,6);
+  memcpy(hardware_wallet.host_cred, mac, 6);
   hardware_wallet.dumpData("host_cred", hardware_wallet.host_cred, 32);
 
   if (LFlash.begin() != LFLASH_OK)
@@ -44,18 +44,18 @@ void setup(void) {
 
 
   uint32_t size =  64;
-  uint8_t Cred_buf[64] = {0}; 
-  LFlash.read("SE","CRED",(uint8_t *)&Cred_buf,&size);
+  uint8_t Cred_buf[64] = {0};
+  LFlash.read("SE", "CRED", (uint8_t *)&Cred_buf, &size);
 
   hardware_wallet.WriteCred(Cred_buf);
   hardware_wallet.init(SE_SS);
 
   waitforcmd();
 
-  uint8_t buf[2] = {0}; 
+  uint8_t buf[2] = {0};
   hardware_wallet.GetModeState(buf);
-  Serial.print("Mode:");Serial.println(buf[0],HEX);
-  Serial.print("State:");Serial.println(buf[1],HEX);
+  Serial.print("Mode:"); Serial.println(buf[0], HEX);
+  Serial.print("State:"); Serial.println(buf[1], HEX);
 
   if (buf[1] == 0x10) // bootloader state
   {
@@ -68,15 +68,15 @@ void setup(void) {
   waitforcmd();
 
   uint8_t ret;
-  
+
   Serial.println("Init Device InFo");
   ret = InitDevInfo();
   Serial.println(ret);
   waitforcmd();
 
   hardware_wallet.GetModeState(buf);
-  Serial.print("Mode:");Serial.println(buf[0],HEX);
-  Serial.print("State:");Serial.println(buf[1],HEX);
+  Serial.print("Mode:"); Serial.println(buf[0], HEX);
+  Serial.print("State:"); Serial.println(buf[1], HEX);
   waitforcmd();
 
   Serial.println("Bind Reg");
@@ -85,8 +85,8 @@ void setup(void) {
   waitforcmd();
 
   hardware_wallet.GetModeState(buf);
-  Serial.print("Mode:");Serial.println(buf[0],HEX);
-  Serial.print("State:");Serial.println(buf[1],HEX);
+  Serial.print("Mode:"); Serial.println(buf[0], HEX);
+  Serial.print("State:"); Serial.println(buf[1], HEX);
   waitforcmd();
 
   Serial.println("Bind Login");
@@ -95,8 +95,8 @@ void setup(void) {
   waitforcmd();
 
   hardware_wallet.GetModeState(buf);
-  Serial.print("Mode:");Serial.println(buf[0],HEX);
-  Serial.print("State:");Serial.println(buf[1],HEX);
+  Serial.print("Mode:"); Serial.println(buf[0], HEX);
+  Serial.print("State:"); Serial.println(buf[1], HEX);
   waitforcmd();
 
   Serial.println("InitWalletFromMnemonic");
@@ -127,12 +127,12 @@ void loop(void) {
   delay(1000000);
 }
 
-void waitforcmd(){
+void waitforcmd() {
   Serial.println("Wait for User input...");
-  while(!Serial.available()){
+  while (!Serial.available()) {
     delay(100);
   }
-  while(Serial.available()){
+  while (Serial.available()) {
     char temp = Serial.read();
   }
 }
@@ -152,7 +152,7 @@ int BindReg(void)
     firstHost = firstHost ? 0 : 1;
     ret = hardware_wallet.BindRegInit(firstHost, hardware_wallet.host_cred, hardware_wallet.host_desc, rcv_buf);
   }
-  if (ret != 0){
+  if (ret != 0) {
     Serial.println("BindRegInit Error!");
     return ret;
   }
@@ -185,13 +185,13 @@ int BindReg(void)
     fwrite(chlng, 1, BIND_CHLNG_LEN, fp);            //space for saving loging challenge
     fclose(fp);
     */
-    uint8_t Cred_buf[1+BIND_OTP_LEN+BIND_CHLNG_LEN] = {0};
+    uint8_t Cred_buf[1 + BIND_OTP_LEN + BIND_CHLNG_LEN] = {0};
     memcpy(Cred_buf, rcv_buf, 1);
-    memcpy(Cred_buf+ 1, otp, BIND_OTP_LEN);
-    memcpy(Cred_buf+ 1+BIND_OTP_LEN, chlng, BIND_CHLNG_LEN);
-    hardware_wallet.dumpData("Cred_buf", Cred_buf, 1+BIND_OTP_LEN+BIND_CHLNG_LEN); 
-    
-    LFlash.write("SE","CRED",LFLASH_RAW_DATA,(const uint8_t *)&Cred_buf,sizeof(Cred_buf));  
+    memcpy(Cred_buf + 1, otp, BIND_OTP_LEN);
+    memcpy(Cred_buf + 1 + BIND_OTP_LEN, chlng, BIND_CHLNG_LEN);
+    hardware_wallet.dumpData("Cred_buf", Cred_buf, 1 + BIND_OTP_LEN + BIND_CHLNG_LEN);
+
+    LFlash.write("SE", "CRED", LFLASH_RAW_DATA, (const uint8_t *)&Cred_buf, sizeof(Cred_buf));
     hardware_wallet.WriteCred(Cred_buf);
 
   }
@@ -208,7 +208,7 @@ static int BindLogin(void)
 
   Serial.println("reading cred");
   uint32_t size =  64;
-  LFlash.read("SE","CRED",(uint8_t *)&cred_buf,&size);
+  LFlash.read("SE", "CRED", (uint8_t *)&cred_buf, &size);
   //hardware_wallet.dumpData("credential", cred_buf,size);
 
   //hardware_wallet.ReadCred(cred_buf);
@@ -227,9 +227,9 @@ static int BindLogin(void)
   Serial.println("Login Success");
 
 
-  memcpy(cred_buf+1+BIND_OTP_LEN, chlng, BIND_CHLNG_LEN);
-  //hardware_wallet.dumpData("cred_buf", cred_buf, 1+BIND_OTP_LEN+BIND_CHLNG_LEN); 
-  LFlash.write("SE","CRED",LFLASH_RAW_DATA,(const uint8_t *)&cred_buf,1+BIND_OTP_LEN+BIND_CHLNG_LEN);  
+  memcpy(cred_buf + 1 + BIND_OTP_LEN, chlng, BIND_CHLNG_LEN);
+  //hardware_wallet.dumpData("cred_buf", cred_buf, 1+BIND_OTP_LEN+BIND_CHLNG_LEN);
+  LFlash.write("SE", "CRED", LFLASH_RAW_DATA, (const uint8_t *)&cred_buf, 1 + BIND_OTP_LEN + BIND_CHLNG_LEN);
   hardware_wallet.WriteCred(cred_buf);
 
 
@@ -241,7 +241,7 @@ static int BindLogin(void)
   //fwrite(chlng, 1, BIND_CHLNG_LEN, fp);
 
   ret = hardware_wallet.GetModeState(rcv_buf);
-  
+
   hardware_wallet.dumpData("GetModeState", rcv_buf, 32);
   if (ret != 0) {
     goto __func_end;
@@ -257,7 +257,7 @@ static int BindLogin(void)
       goto __func_end;
   }
 
-  __func_end:
+__func_end:
   return ret;
 }
 
@@ -324,7 +324,7 @@ static int InitDevInfo(void)
 
   ret = hardware_wallet.InitDataConfirm();
   if (ret != 0) {
-      return ret;
+    return ret;
   }
 
   return ret;
@@ -354,7 +354,7 @@ static int hdw_query_wallet_info(void)
   ret = hardware_wallet.hdw_qry_wa_info(rcv_buf);
   if (ret != 0)
     return ret;
-  Serial.print("hdw status 0x");Serial.println(rcv_buf[0],HEX);
+  Serial.print("hdw status 0x"); Serial.println(rcv_buf[0], HEX);
   hardware_wallet.dumpData("hdw name:", rcv_buf + 1, HDW_NAME_LEN);
   hardware_wallet.dumpData("hdw account ptr:", rcv_buf + 1 + HDW_NAME_LEN, 4);
 
