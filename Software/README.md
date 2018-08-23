@@ -17,7 +17,7 @@ Libraries is included in the board support package, so you don't have to install
 
 ## Libraries
 * **Adafruit_GFX** - Graphics Library, Adafruit did a great gob on product and librarires and documents: https://learn.adafruit.com/adafruit-gfx-graphics-library/overview
-* **Adafruit_PN532**	
+* **PN532**	- although not used in the main program, I've made emulate NFC Tag for IOS and Android (Tested on iPhone7 and Desire 820) possible. The library is a modified version from Seeedstudio, https://github.com/Seeed-Studio/PN532.  
 * **CmdArduino** - Cmdline interface from https://github.com/fakufaku/CmdArduino, but I modified a bit to makes it compatiable with putty, also a larger buffer.  
 * **GxEPD**	- From https://github.com/ZinggJM/GxEPD, but I also modified for Linkit7697 because some SPI interface issue. It is a bit large library designed for almost every intergrate controller E-ink display, the one that Hitconbadge used is GxGDE0213B1.
 * **QRCode** - From https://github.com/ricmoo/QRCode, nothing is changed.
