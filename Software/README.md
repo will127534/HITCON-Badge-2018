@@ -21,7 +21,7 @@ Libraries is included in the board support package, so you don't have to install
 * **CmdArduino** - Cmdline interface from https://github.com/fakufaku/CmdArduino, but I modified a bit to makes it compatiable with putty, also a larger buffer.  
 * **GxEPD**	- From https://github.com/ZinggJM/GxEPD, but I also modified for Linkit7697 because some SPI interface issue. It is a bit large library designed for almost every intergrate controller E-ink display, the one that Hitconbadge used is GxGDE0213B1.
 * **QRCode** - From https://github.com/ricmoo/QRCode, nothing is changed.
-* **SecurtyElement** - From myself.
+* **SecurtyElement** - From myself. info is under the library folder: https://github.com/will127534/HITCON-Badge-2018/tree/master/Software/Library/SecurtyElement
 
 ## Utlity
 
