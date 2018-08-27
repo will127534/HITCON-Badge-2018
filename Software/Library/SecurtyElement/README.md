@@ -58,4 +58,4 @@ State is defined as follow:
 * 0x07 - DISCONN
 
 status of last cmd is 0x00 for success, status other than 0x00 is error code.
-
+![](https://i.imgur.com/grEfyjS.png)
